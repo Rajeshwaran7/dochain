@@ -46,8 +46,8 @@ function DoctorCard({ doctor }: { doctor: any }) {
           )}
         </div>
         <div className="flex items-center justify-between mt-3">
-          <span className="font-medium text-gray-900">
-            Slot ending soon!!
+          <span className="font-medium text-red-600">
+            Hurry up!!
             <span className="text-gray-600 font-normal text-xs"> / visit</span>
           </span>
           <span className="text-cyan-600 text-sm flex items-center gap-1">

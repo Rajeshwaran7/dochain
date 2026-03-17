@@ -243,7 +243,6 @@ export default function DoctorProfilePage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Book Appointment</h2>
                 <span className="font-display text-xl font-bold text-cyan-600">
-                  {formatCurrency(Number(doctor.consultationFee))}
                 </span>
               </div>
 
