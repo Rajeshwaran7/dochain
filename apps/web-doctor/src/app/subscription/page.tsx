@@ -56,10 +56,10 @@ export default function SubscriptionPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center gap-4">
-        <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm">
+        <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm">
           <ChevronLeft className="w-4 h-4" /> Dashboard
         </Link>
-        <h1 className="font-semibold text-gray-800">Subscription Plans</h1>
+        <h1 className="font-semibold text-gray-900">Subscription Plans</h1>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -68,12 +68,12 @@ export default function SubscriptionPage() {
           <div className="card p-4 mb-8 border-violet-200 bg-violet-50 flex items-center gap-3">
             <CreditCard className="w-5 h-5 text-violet-600 shrink-0" />
             <div>
-              <span className="font-semibold text-gray-800 capitalize">{currentSub.plan} Plan</span>
+              <span className="font-semibold text-gray-900 capitalize">{currentSub.plan} Plan</span>
               {' '}
-              <span className="text-gray-500 text-sm">— Active subscription</span>
+              <span className="text-gray-600 text-sm">— Active subscription</span>
             </div>
             {currentSub.currentPeriodEnd && (
-              <span className="ml-auto text-gray-500 text-sm">
+              <span className="ml-auto text-gray-600 text-sm">
                 Renews {new Date(currentSub.currentPeriodEnd).toLocaleDateString('en-IN')}
               </span>
             )}
@@ -82,7 +82,7 @@ export default function SubscriptionPage() {
 
         <div className="text-center mb-10">
           <h2 className="font-bold text-2xl text-gray-900 mb-2">Choose your plan</h2>
-          <p className="text-gray-500">Start free for 3 months. Upgrade anytime.</p>
+          <p className="text-gray-600">Start free for 3 months. Upgrade anytime.</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -109,7 +109,7 @@ export default function SubscriptionPage() {
                       : (
                         <>
                           <span className="text-2xl font-bold text-gray-900">₹{plan.price}</span>
-                          <span className="text-gray-500 text-sm">/mo</span>
+                          <span className="text-gray-600 text-sm">/mo</span>
                         </>
                       )
                     }
@@ -118,7 +118,7 @@ export default function SubscriptionPage() {
 
                 <ul className="space-y-2 flex-1 mb-5">
                   {(plan.features || []).map((f: string) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-500">
+                    <li key={f} className="flex items-start gap-2 text-sm text-gray-600">
                       <Check className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
                       {f}
                     </li>
@@ -142,8 +142,8 @@ export default function SubscriptionPage() {
         </div>
 
         <div className="mt-8 card p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
-          <p className="text-gray-500 text-sm">
+          <AlertCircle className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+          <p className="text-gray-600 text-sm">
             Payments are processed securely via Razorpay. You can cancel anytime from your dashboard.
             New doctors get a free 3-month trial on the Basic plan.
           </p>

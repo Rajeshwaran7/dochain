@@ -2,22 +2,60 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Availability, AvailabilityException, Doctor } from '@dochain/database';
+import { IsString, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateAvailabilityDto {
+  @IsString()
   dayOfWeek: string;
+
+  @IsString()
   startTime: string;
+
+  @IsString()
   endTime: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   slotDurationMinutes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   maxAppointments?: number;
+
+  @IsOptional()
+  @IsString()
   breakStartTime?: string;
+
+  @IsOptional()
+  @IsString()
   breakEndTime?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class CreateExceptionDto {
+  @IsString()
   date: string;
+
+  @IsOptional()
+  @IsBoolean()
   isHoliday?: boolean;
+
+  @IsOptional()
+  @IsString()
   reason?: string;
+
+  @IsOptional()
+  @IsString()
   customStartTime?: string;
+
+  @IsOptional()
+  @IsString()
   customEndTime?: string;
 }
 

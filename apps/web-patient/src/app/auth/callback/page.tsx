@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
       <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
-      <p className="text-gray-500 text-sm">Completing sign-in…</p>
+      <p className="text-gray-600 text-sm">Completing sign-in…</p>
     </div>
   );
 }

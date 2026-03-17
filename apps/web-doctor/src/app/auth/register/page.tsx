@@ -52,7 +52,7 @@ export default function DoctorRegisterPage() {
       <div className="w-full max-w-md animate-in">
         <div className="text-center mb-8">
           <Link href="/" className="font-bold text-violet-600 text-2xl">Dochain</Link>
-          <h1 className="text-gray-500 text-sm mt-2">Doctor Registration</h1>
+          <h1 className="text-gray-600 text-sm mt-2">Doctor Registration</h1>
         </div>
 
         <div className="card p-8">
@@ -62,7 +62,7 @@ export default function DoctorRegisterPage() {
             </div>
             <div>
               <h2 className="font-bold text-gray-900">Join as a Doctor</h2>
-              <p className="text-gray-500 text-xs">Start with 3 months free</p>
+              <p className="text-gray-600 text-xs">Start with 3 months free</p>
             </div>
           </div>
 
@@ -113,7 +113,7 @@ export default function DoctorRegisterPage() {
               <label className="label">Password</label>
               <div className="relative">
                 <input {...register('password')} type={showPass ? 'text' : 'password'} className="input pr-10" placeholder="Min 8 characters" />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -131,7 +131,7 @@ export default function DoctorRegisterPage() {
             </button>
           </form>
 
-          <p className="text-center text-gray-500 text-sm mt-6">
+          <p className="text-center text-gray-600 text-sm mt-6">
             Already have an account?{' '}
             <Link href="/auth/login" className="text-violet-600 hover:text-violet-700 font-medium">Sign in</Link>
           </p>

@@ -15,11 +15,11 @@ function StatCard({ icon, label, value, sub, color }: { icon: React.ReactNode; l
   return (
     <div className="stat-card">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-gray-500 text-sm">{label}</span>
+        <span className="text-gray-600 text-sm">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
       </div>
       <div className="font-bold text-2xl text-gray-900">{value}</div>
-      {sub && <div className="text-gray-400 text-xs mt-1">{sub}</div>}
+      {sub && <div className="text-gray-600 text-xs mt-1">{sub}</div>}
     </div>
   );
 }
@@ -42,13 +42,13 @@ export default function AdminDashboard() {
       <Sidebar />
       <div className="md:pl-56">
         <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center">
-          <h1 className="font-semibold text-gray-800">Dashboard</h1>
+          <h1 className="font-semibold text-gray-900">Dashboard</h1>
         </header>
 
         <main className="p-6 space-y-6">
           <div className="animate-in">
             <h2 className="text-xl font-bold text-gray-900">Welcome, {user.firstName}</h2>
-            <p className="text-gray-500 text-sm mt-1">Platform overview and key metrics.</p>
+            <p className="text-gray-600 text-sm mt-1">Platform overview and key metrics.</p>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
           <div className="grid lg:grid-cols-5 gap-5">
             <div className="card p-5 lg:col-span-3">
-              <h3 className="font-semibold text-gray-800 mb-4">Appointments (Last 6 months)</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Appointments (Last 6 months)</h3>
               {monthly.length > 0 ? (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={monthly} barSize={28}>
@@ -98,19 +98,19 @@ export default function AdminDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-48 text-gray-400 text-sm">No data yet</div>
+                <div className="flex items-center justify-center h-48 text-gray-600 text-sm">No data yet</div>
               )}
             </div>
 
             <div className="card p-5 lg:col-span-2">
-              <h3 className="font-semibold text-gray-800 mb-4">Quick Stats</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
                       <Clock className="w-4 h-4 text-amber-600" />
                     </div>
-                    <span className="text-gray-500 text-sm">Pending Doctors</span>
+                    <span className="text-gray-600 text-sm">Pending Doctors</span>
                   </div>
                   <span className="font-bold text-gray-900">{stats?.doctors?.pending ?? 0}</span>
                 </div>
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
                     <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                       <CheckCircle className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <span className="text-gray-500 text-sm">Approved Doctors</span>
+                    <span className="text-gray-600 text-sm">Approved Doctors</span>
                   </div>
                   <span className="font-bold text-gray-900">{stats?.doctors?.approved ?? 0}</span>
                 </div>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                     <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
                       <TrendingUp className="w-4 h-4 text-blue-600" />
                     </div>
-                    <span className="text-gray-500 text-sm">Active Subscriptions</span>
+                    <span className="text-gray-600 text-sm">Active Subscriptions</span>
                   </div>
                   <span className="font-bold text-gray-900">{stats?.subscriptions?.active ?? 0}</span>
                 </div>

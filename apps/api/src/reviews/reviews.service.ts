@@ -4,15 +4,29 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review, Doctor, Patient, Appointment, AppointmentStatus } from '@dochain/database';
+import { IsUUID, IsNumber, IsOptional, IsString, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateReviewDto {
+  @IsUUID()
   doctorId: string;
+
+  @IsUUID()
   appointmentId: string;
+
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  @Type(() => Number)
   rating: number;
+
+  @IsOptional()
+  @IsString()
   comment?: string;
 }
 
 export class ReplyReviewDto {
+  @IsString()
   reply: string;
 }
 
@@ -78,6 +92,21 @@ export class ReviewsService {
     review.doctorReply = dto.reply;
     review.doctorRepliedAt = new Date();
     return this.reviewRepo.save(review);
+  }
+
+  async deleteReview(reviewId: string, userId: string) {
+    const review = await this.reviewRepo.findOne({
+      where: { id: reviewId },
+      relations: ['doctor'],
+    });
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.doctor.userId !== userId) throw new ForbiddenException();
+
+    const { doctorId } = review;
+    await this.reviewRepo.remove(review);
+    await this.recalculateRating(doctorId);
+
+    return { message: 'Review deleted' };
   }
 
   private async recalculateRating(doctorId: string) {

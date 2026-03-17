@@ -32,7 +32,6 @@ export default function DoctorProfilePage() {
         qualification:      profile.qualification || '',
         registrationNumber: profile.registrationNumber || '',
         bio:                profile.bio || '',
-        consultationFee:    profile.consultationFee || 0,
         city:               profile.city || '',
         state:              profile.state || '',
       });
@@ -62,10 +61,10 @@ export default function DoctorProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center gap-4">
-        <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm">
+        <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm">
           <ChevronLeft className="w-4 h-4" /> Dashboard
         </Link>
-        <h1 className="font-semibold text-gray-800">My Profile</h1>
+        <h1 className="font-semibold text-gray-900">My Profile</h1>
         {profile?.status && (
           <span className={`badge ml-auto ${
             profile.status === 'approved'  ? 'badge-green' :
@@ -81,7 +80,7 @@ export default function DoctorProfilePage() {
         {/* Professional Info */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-800 mb-5">Professional Information</h2>
+            <h2 className="font-semibold text-gray-900 mb-5">Professional Information</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Specialization *</label>
@@ -97,10 +96,6 @@ export default function DoctorProfilePage() {
               <div>
                 <label className="label">Experience (years)</label>
                 <input {...register('experienceYears')} type="number" min="0" max="60" className="input" />
-              </div>
-              <div>
-                <label className="label">Consultation Fee (₹)</label>
-                <input {...register('consultationFee')} type="number" min="0" className="input" placeholder="500" />
               </div>
               <div>
                 <label className="label">Qualification</label>
@@ -143,7 +138,7 @@ export default function DoctorProfilePage() {
           <div className="card p-6">
             <div className="flex items-center gap-3 mb-5">
               <Building2 className="w-5 h-5 text-violet-600" />
-              <h2 className="font-semibold text-gray-800">Clinic Information</h2>
+              <h2 className="font-semibold text-gray-900">Clinic Information</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">

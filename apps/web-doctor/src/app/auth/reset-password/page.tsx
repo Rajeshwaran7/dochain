@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
         <div className="card max-w-md w-full p-8 text-center">
           <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Link</h1>
-          <p className="text-gray-500 mb-6">This password reset link is invalid or has expired.</p>
+          <p className="text-gray-600 mb-6">This password reset link is invalid or has expired.</p>
           <Link href="/auth/forgot-password"
             className="btn-primary inline-block px-6 py-2.5 rounded-xl font-medium">
             Request New Link
@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
         <div className="card max-w-md w-full p-8 text-center">
           <CheckCircle className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Reset!</h1>
-          <p className="text-gray-500 mb-6">Your password has been reset successfully.</p>
+          <p className="text-gray-600 mb-6">Your password has been reset successfully.</p>
           <Link href="/auth/login"
             className="btn-primary inline-block px-6 py-2.5 rounded-xl font-medium">
             Login Now
@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
         <div className="card max-w-md w-full p-8 text-center">
           <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Failed</h1>
-          <p className="text-gray-500 mb-6">This reset link is invalid or has expired.</p>
+          <p className="text-gray-600 mb-6">This reset link is invalid or has expired.</p>
           <Link href="/auth/forgot-password"
             className="btn-primary inline-block px-6 py-2.5 rounded-xl font-medium">
             Request New Link
@@ -93,13 +93,13 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="card max-w-md w-full p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h1>
-        <p className="text-gray-500 mb-6">Enter your new password below.</p>
+        <p className="text-gray-600 mb-6">Enter your new password below.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">New Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -107,19 +107,19 @@ export default function ResetPasswordPage() {
                 placeholder="Min. 8 characters"
                 required
                 minLength={8}
-                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder:text-gray-500 focus:outline-none focus:border-violet-500"
+                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-violet-500"
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
                 placeholder="Re-enter password"
                 required
                 minLength={8}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder:text-gray-500 focus:outline-none focus:border-violet-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-violet-500"
               />
             </div>
           </div>

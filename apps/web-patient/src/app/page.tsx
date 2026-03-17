@@ -70,7 +70,7 @@ export default function HomePage() {
             Find the right doctor,
             <span className="text-cyan-600"> book instantly</span>
           </h1>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto mb-10">
+          <p className="text-gray-600 text-lg max-w-xl mx-auto mb-10">
             Connect with verified specialists in your city. Real-time availability,
             instant confirmation, zero waiting.
           </p>
@@ -78,22 +78,22 @@ export default function HomePage() {
           {/* Quick search */}
           <div className="card p-3 flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
             <div className="flex-1 flex items-center gap-3 input">
-              <Search className="w-4 h-4 text-gray-500 shrink-0" />
+              <Search className="w-4 h-4 text-gray-600 shrink-0" />
               <input
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="bg-transparent outline-none w-full text-gray-800 placeholder-gray-500 text-sm"
+                className="bg-transparent outline-none w-full text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Specialization or doctor name…"
               />
             </div>
             <div className="flex items-center gap-3 input sm:w-44">
-              <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
+              <MapPin className="w-4 h-4 text-gray-600 shrink-0" />
               <input
                 value={searchCity}
                 onChange={(e) => setSearchCity(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="bg-transparent outline-none w-full text-gray-800 placeholder-gray-500 text-sm"
+                className="bg-transparent outline-none w-full text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="City"
               />
             </div>
@@ -115,7 +115,7 @@ export default function HomePage() {
           ].map((s) => (
             <div key={s.label}>
               <div className="font-display text-3xl font-bold text-cyan-600">{s.value}</div>
-              <div className="text-gray-500 text-sm mt-1">{s.label}</div>
+              <div className="text-gray-600 text-sm mt-1">{s.label}</div>
             </div>
           ))}
         </div>
@@ -137,10 +137,10 @@ export default function HomePage() {
               className="card-hover p-5 text-center group"
             >
               <div className="text-3xl mb-3">{s.icon}</div>
-              <div className="font-medium text-gray-800 text-sm group-hover:text-cyan-700 transition-colors">
+              <div className="font-medium text-gray-900 text-sm group-hover:text-cyan-700 transition-colors">
                 {s.name}
               </div>
-              <div className="text-gray-500 text-xs mt-1">{s.count} doctors</div>
+              <div className="text-gray-600 text-xs mt-1">{s.count} doctors</div>
             </Link>
           ))}
         </div>
@@ -180,7 +180,7 @@ export default function HomePage() {
                     {item.icon}
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -203,8 +203,8 @@ export default function HomePage() {
                 {f.icon}
               </div>
               <div>
-                <div className="font-semibold text-gray-800 mb-1">{f.title}</div>
-                <div className="text-gray-500 text-sm">{f.desc}</div>
+                <div className="font-semibold text-gray-900 mb-1">{f.title}</div>
+                <div className="text-gray-600 text-sm">{f.desc}</div>
               </div>
             </div>
           ))}
@@ -217,7 +217,7 @@ export default function HomePage() {
           <h2 className="font-display text-3xl font-bold text-gray-900 mb-3">
             Ready to find your doctor?
           </h2>
-          <p className="text-gray-500 mb-8">Join thousands of patients who trust Dochain.</p>
+          <p className="text-gray-600 mb-8">Join thousands of patients who trust Dochain.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {isAuthenticated ? (
               <Link href="/doctors" className="btn-primary">Find a Doctor</Link>
@@ -230,7 +230,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 py-8 px-4 text-center text-gray-400 text-sm">
+      <footer className="border-t border-gray-200 py-8 px-4 text-center text-gray-600 text-sm">
         © {new Date().getFullYear()} Dochain. All rights reserved.
       </footer>
     </main>

@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { ChevronLeft, Trash2, Save, Loader2 } from 'lucide-react';
 import { useMyProfile } from '@/hooks/useApi';
 import { useSetAvailability, useMyAvailability } from '@/hooks/useApi';
 
@@ -31,13 +31,19 @@ export default function AvailabilityPage() {
   const { data: profile } = useMyProfile();
   const doctorId = profile?.id;
 
-  const { data: existing = [] } = useMyAvailability(doctorId);
+  const { data: existing = [], isSuccess } = useMyAvailability(doctorId);
   const { mutateAsync: save, isPending } = useSetAvailability();
 
-  const [slots, setSlots] = useState<Slot[]>(() =>
-    existing.length > 0 ? existing : []
-  );
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [saved, setSaved] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (isSuccess && !initialized) {
+      setSlots(existing.length > 0 ? existing : []);
+      setInitialized(true);
+    }
+  }, [isSuccess, existing, initialized]);
 
   const addDay = (day: string) => {
     if (slots.find(s => s.dayOfWeek === day)) return;
@@ -61,16 +67,16 @@ export default function AvailabilityPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center gap-4">
-        <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm">
+        <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm">
           <ChevronLeft className="w-4 h-4" /> Dashboard
         </Link>
-        <h1 className="font-semibold text-gray-800">Availability Settings</h1>
+        <h1 className="font-semibold text-gray-900">Availability Settings</h1>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Day selector */}
         <div className="card p-5">
-          <h2 className="font-semibold text-gray-800 mb-4">Working Days</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">Working Days</h2>
           <div className="flex flex-wrap gap-2">
             {DAYS.map(day => {
               const active = activeDays.includes(day);
@@ -79,7 +85,7 @@ export default function AvailabilityPage() {
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     active
                       ? 'bg-violet-600 text-white'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {DAY_LABELS[day]}
@@ -93,9 +99,9 @@ export default function AvailabilityPage() {
         {slots.map(slot => (
           <div key={slot.dayOfWeek} className="card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800 capitalize">{slot.dayOfWeek}</h3>
+              <h3 className="font-semibold text-gray-900 capitalize">{slot.dayOfWeek}</h3>
               <button onClick={() => removeDay(slot.dayOfWeek)}
-                className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                className="text-gray-500 hover:text-red-600 transition-colors p-1">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -128,13 +134,13 @@ export default function AvailabilityPage() {
                   className="input text-sm" />
               </div>
               <div>
-                <label className="label text-xs">Break start <span className="text-gray-400">(optional)</span></label>
+                <label className="label text-xs">Break start <span className="text-gray-500">(optional)</span></label>
                 <input type="time" value={slot.breakStartTime || ''}
                   onChange={e => updateSlot(slot.dayOfWeek, 'breakStartTime', e.target.value)}
                   className="input text-sm" />
               </div>
               <div>
-                <label className="label text-xs">Break end <span className="text-gray-400">(optional)</span></label>
+                <label className="label text-xs">Break end <span className="text-gray-500">(optional)</span></label>
                 <input type="time" value={slot.breakEndTime || ''}
                   onChange={e => updateSlot(slot.dayOfWeek, 'breakEndTime', e.target.value)}
                   className="input text-sm" />
@@ -145,11 +151,14 @@ export default function AvailabilityPage() {
 
         {slots.length === 0 && (
           <div className="card p-10 text-center">
-            <p className="text-gray-400 text-sm">Select working days above to configure your availability.</p>
+            <p className="text-gray-600 text-sm">Select working days above to configure your availability.</p>
+            {initialized && (
+              <p className="text-gray-500 text-xs mt-2">Click Save to clear all availability if you removed all days.</p>
+            )}
           </div>
         )}
 
-        {slots.length > 0 && (
+        {initialized && (
           <button onClick={handleSave} disabled={isPending}
             className="btn-primary w-full flex items-center justify-center gap-2">
             {isPending

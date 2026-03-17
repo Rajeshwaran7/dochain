@@ -95,7 +95,7 @@ export default function DoctorProfilePage() {
 
   if (!doctor) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-gray-500">Doctor not found</div>
+      <div className="text-gray-600">Doctor not found</div>
     </div>
   );
 
@@ -104,13 +104,13 @@ export default function DoctorProfilePage() {
   const reviews = reviewsData?.data || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <nav className="glass sticky top-0 z-40 border-b border-gray-200 px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <Link href="/doctors" className="text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1 text-sm">
+          <Link href="/doctors" className="text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1 text-sm">
             <ChevronLeft className="w-4 h-4" /> Back
           </Link>
-          <span className="text-gray-300">|</span>
+          <span className="text-gray-500">|</span>
           <Link href="/" className="font-display font-bold text-cyan-600">Dochain</Link>
         </div>
       </nav>
@@ -141,7 +141,7 @@ export default function DoctorProfilePage() {
                   </div>
                   {doctor.isFeatured && <span className="badge badge-yellow">Featured</span>}
                 </div>
-                <div className="flex flex-wrap gap-3 mt-3 text-sm text-gray-500">
+                <div className="flex flex-wrap gap-3 mt-3 text-sm text-gray-600">
                   {doctor.experienceYears > 0 && (
                     <span className="flex items-center gap-1"><Award className="w-4 h-4" /> {doctor.experienceYears} yrs exp.</span>
                   )}
@@ -161,8 +161,8 @@ export default function DoctorProfilePage() {
             {/* About */}
             {doctor.bio && (
               <div className="card p-5">
-                <h2 className="font-semibold text-gray-800 mb-3">About</h2>
-                <p className="text-gray-500 text-sm leading-relaxed">{doctor.bio}</p>
+                <h2 className="font-semibold text-gray-900 mb-3">About</h2>
+                <p className="text-gray-600 text-sm leading-relaxed">{doctor.bio}</p>
               </div>
             )}
 
@@ -170,21 +170,21 @@ export default function DoctorProfilePage() {
             <div className="card p-5 grid sm:grid-cols-2 gap-4">
               {doctor.qualification && (
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">Qualification</div>
-                  <div className="text-gray-700 text-sm">{doctor.qualification}</div>
+                  <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Qualification</div>
+                  <div className="text-gray-900 text-sm">{doctor.qualification}</div>
                 </div>
               )}
               {doctor.languages?.length > 0 && (
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">
+                  <div className="text-xs text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
                     <Languages className="w-3 h-3" /> Languages
                   </div>
-                  <div className="text-gray-700 text-sm">{doctor.languages.join(', ')}</div>
+                  <div className="text-gray-900 text-sm">{doctor.languages.join(', ')}</div>
                 </div>
               )}
               {doctor.services?.length > 0 && (
                 <div className="sm:col-span-2">
-                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-2">Services</div>
+                  <div className="text-xs text-gray-600 uppercase tracking-wide mb-2">Services</div>
                   <div className="flex flex-wrap gap-2">
                     {doctor.services.map((s: string) => (
                       <span key={s} className="badge badge-blue">{s}</span>
@@ -197,20 +197,20 @@ export default function DoctorProfilePage() {
             {/* Clinic */}
             {clinic && (
               <div className="card p-5">
-                <h2 className="font-semibold text-gray-800 mb-3">Clinic</h2>
-                <div className="text-gray-700 font-medium">{clinic.name}</div>
-                <div className="text-gray-500 text-sm mt-1">
+                <h2 className="font-semibold text-gray-900 mb-3">Clinic</h2>
+                <div className="text-gray-900 font-medium">{clinic.name}</div>
+                <div className="text-gray-600 text-sm mt-1">
                   {clinic.addressLine1}, {clinic.city} – {clinic.pincode}
                 </div>
-                {clinic.phone && <div className="text-gray-500 text-sm mt-1">📞 {clinic.phone}</div>}
+                {clinic.phone && <div className="text-gray-600 text-sm mt-1">📞 {clinic.phone}</div>}
               </div>
             )}
 
             {/* Reviews */}
             <div className="card p-5">
-              <h2 className="font-semibold text-gray-800 mb-4">Patient Reviews</h2>
+              <h2 className="font-semibold text-gray-900 mb-4">Patient Reviews</h2>
               {reviews.length === 0 ? (
-                <p className="text-gray-400 text-sm">No reviews yet.</p>
+                <p className="text-gray-600 text-sm">No reviews yet.</p>
               ) : (
                 <div className="space-y-4">
                   {reviews.map((rev: any) => (
@@ -218,16 +218,16 @@ export default function DoctorProfilePage() {
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex">
                           {Array.from({ length: 5 }, (_, i) => (
-                            <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? 'text-amber-600 fill-current' : 'text-gray-300'}`} />
+                            <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? 'text-amber-600 fill-current' : 'text-gray-400'}`} />
                           ))}
                         </div>
-                        <span className="text-gray-500 text-xs">{formatDate(rev.createdAt)}</span>
+                        <span className="text-gray-600 text-xs">{formatDate(rev.createdAt)}</span>
                       </div>
-                      {rev.comment && <p className="text-gray-500 text-sm">{rev.comment}</p>}
+                      {rev.comment && <p className="text-gray-600 text-sm">{rev.comment}</p>}
                       {rev.doctorReply && (
                         <div className="mt-2 ml-4 bg-gray-50 rounded-lg p-3">
                           <p className="text-xs text-cyan-600 font-medium mb-1">Doctor's reply</p>
-                          <p className="text-gray-500 text-sm">{rev.doctorReply}</p>
+                          <p className="text-gray-600 text-sm">{rev.doctorReply}</p>
                         </div>
                       )}
                     </div>
@@ -241,7 +241,7 @@ export default function DoctorProfilePage() {
           <div className="space-y-4">
             <div className="card p-5 sticky top-20">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-800">Book Appointment</h2>
+                <h2 className="font-semibold text-gray-900">Book Appointment</h2>
                 <span className="font-display text-xl font-bold text-cyan-600">
                   {formatCurrency(Number(doctor.consultationFee))}
                 </span>
@@ -259,7 +259,7 @@ export default function DoctorProfilePage() {
                           className={`rounded-xl py-2 text-center transition-all ${
                             selectedDate === d.date
                               ? 'bg-cyan-600 text-white font-semibold'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
                           <div className="text-xs">{d.label}</div>
@@ -273,7 +273,7 @@ export default function DoctorProfilePage() {
                   <div className="mb-4">
                     <label className="label text-xs">Available slots</label>
                     {slots.length === 0 ? (
-                      <p className="text-gray-400 text-sm py-2">No slots available on this day.</p>
+                      <p className="text-gray-600 text-sm py-2">No slots available on this day.</p>
                     ) : (
                       <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto">
                         {slots.map((slot: string) => (
@@ -283,7 +283,7 @@ export default function DoctorProfilePage() {
                             className={`rounded-lg py-1.5 text-xs transition-all ${
                               selectedSlot === slot
                                 ? 'bg-cyan-600 text-white font-semibold'
-                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
                             {formatTime(slot)}
@@ -295,7 +295,7 @@ export default function DoctorProfilePage() {
 
                   {/* Symptoms */}
                   <div className="mb-5">
-                    <label className="label text-xs">Symptoms / reason <span className="text-gray-400">(optional)</span></label>
+                    <label className="label text-xs">Symptoms / reason <span className="text-gray-600">(optional)</span></label>
                     <textarea
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}

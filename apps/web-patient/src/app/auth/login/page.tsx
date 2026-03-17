@@ -47,7 +47,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-2xl font-bold text-cyan-600">Dochain</Link>
-          <h1 className="text-gray-500 text-sm mt-2">Patient Portal</h1>
+          <h1 className="text-gray-600 text-sm mt-2">Patient Portal</h1>
         </div>
 
         <div className="card p-8">
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -113,7 +113,7 @@ export default function LoginPage() {
           <div className="mt-4 text-center">
             <div className="relative flex items-center my-5">
               <div className="flex-1 border-t border-gray-200" />
-              <span className="px-3 text-gray-400 text-xs">or</span>
+              <span className="px-3 text-gray-500 text-xs">or</span>
               <div className="flex-1 border-t border-gray-200" />
             </div>
             <a
@@ -130,7 +130,7 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <p className="text-center text-gray-500 text-sm mt-6">
+          <p className="text-center text-gray-600 text-sm mt-6">
             Don&apos;t have an account?{' '}
             <Link href="/auth/register" className="text-cyan-600 hover:text-cyan-700 font-medium">
               Sign up free

@@ -31,7 +31,7 @@ function DoctorCard({ doctor }: { doctor: any }) {
             <span className="badge badge-yellow shrink-0">Featured</span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
+        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
           {doc.experienceYears > 0 && <span>{doc.experienceYears} yrs exp.</span>}
           {doc.city && (
             <span className="flex items-center gap-1">
@@ -41,14 +41,14 @@ function DoctorCard({ doctor }: { doctor: any }) {
           {doc.averageRating > 0 && (
             <span className="flex items-center gap-1 text-amber-600">
               <Star className="w-3 h-3 fill-current" /> {Number(doc.averageRating).toFixed(1)}
-              <span className="text-gray-400">({doc.totalReviews})</span>
+              <span className="text-gray-600">({doc.totalReviews})</span>
             </span>
           )}
         </div>
         <div className="flex items-center justify-between mt-3">
-          <span className="font-medium text-gray-700">
-            ₹{Number(doc.consultationFee).toLocaleString('en-IN')}
-            <span className="text-gray-400 font-normal text-xs"> / visit</span>
+          <span className="font-medium text-gray-900">
+            Slot ending soon!!
+            <span className="text-gray-600 font-normal text-xs"> / visit</span>
           </span>
           <span className="text-cyan-600 text-sm flex items-center gap-1">
             Book <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -72,6 +72,7 @@ export default function DoctorsPage() {
 
   const [nameInput, setNameInput] = useState(filters.name);
   const [cityInput, setCityInput] = useState(filters.city);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data, isLoading } = useDoctors(filters);
   const { data: specs = [] } = useSpecializations();
@@ -95,14 +96,14 @@ export default function DoctorsPage() {
   const pages   = data?.totalPages || 1;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Top bar */}
       <div className="glass sticky top-0 z-40 border-b border-gray-200 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
           <Link href="/" className="font-display font-bold text-cyan-600 text-lg mr-2">Dochain</Link>
           <div className="flex-1 flex items-center gap-2">
             <div className="flex items-center gap-2 input flex-1 max-w-sm py-2">
-              <Search className="w-4 h-4 text-gray-500 shrink-0" />
+              <Search className="w-4 h-4 text-gray-600 shrink-0" />
               <input
                 value={nameInput}
                 onChange={(e) => { setNameInput(e.target.value); debouncedSetFilter('name', e.target.value); }}
@@ -111,7 +112,7 @@ export default function DoctorsPage() {
               />
             </div>
             <div className="flex items-center gap-2 input w-36 py-2">
-              <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
+              <MapPin className="w-4 h-4 text-gray-600 shrink-0" />
               <input
                 value={cityInput}
                 onChange={(e) => { setCityInput(e.target.value); debouncedSetFilter('city', e.target.value); }}
@@ -123,6 +124,9 @@ export default function DoctorsPage() {
                 {cities.map((c: string) => <option key={c} value={c} />)}
               </datalist>
             </div>
+            <button onClick={() => setShowFilters(true)} className="md:hidden btn-secondary p-2.5">
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -131,7 +135,7 @@ export default function DoctorsPage() {
         {/* Sidebar filters */}
         <aside className="w-56 shrink-0 hidden md:block">
           <div className="card p-5 sticky top-20">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
               <SlidersHorizontal className="w-4 h-4" /> Filters
             </h3>
             <div className="mb-5">
@@ -170,20 +174,20 @@ export default function DoctorsPage() {
         {/* Results */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-600 text-sm">
               {isLoading ? 'Searching…' : `${total} doctor${total !== 1 ? 's' : ''} found`}
             </p>
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 text-gray-500">
+            <div className="flex items-center justify-center py-20 text-gray-600">
               <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading doctors…
             </div>
           ) : doctors.length === 0 ? (
             <div className="card p-12 text-center">
               <div className="text-4xl mb-3">🔍</div>
-              <h3 className="font-semibold text-gray-700 mb-1">No doctors found</h3>
-              <p className="text-gray-500 text-sm">Try adjusting your filters.</p>
+              <h3 className="font-semibold text-gray-900 mb-1">No doctors found</h3>
+              <p className="text-gray-600 text-sm">Try adjusting your filters.</p>
             </div>
           ) : (
             <>
@@ -199,7 +203,7 @@ export default function DoctorsPage() {
                       onClick={() => setFilters((f) => ({ ...f, page: p }))}
                       className={p === filters.page
                         ? 'w-9 h-9 rounded-lg bg-cyan-600 text-white font-semibold text-sm'
-                        : 'w-9 h-9 rounded-lg bg-gray-100 text-gray-500 text-sm hover:bg-gray-200'}
+                        : 'w-9 h-9 rounded-lg bg-gray-100 text-gray-600 text-sm hover:bg-gray-200'}
                     >
                       {p}
                     </button>
@@ -210,6 +214,46 @@ export default function DoctorsPage() {
           )}
         </div>
       </div>
+
+      {/* Mobile filter sheet */}
+      {showFilters && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 md:hidden" onClick={() => setShowFilters(false)}>
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 animate-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Filters</h3>
+              <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-gray-900">✕</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="label text-xs uppercase tracking-wide">Specialization</label>
+                <select
+                  value={filters.specialization}
+                  onChange={(e) => setFilters((f) => ({ ...f, specialization: e.target.value, page: 1 }))}
+                  className="input text-sm py-2"
+                >
+                  <option value="">All specializations</option>
+                  {specs.map((s: string) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label text-xs uppercase tracking-wide">City</label>
+                <select
+                  value={filters.city}
+                  onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value, page: 1 }))}
+                  className="input text-sm py-2"
+                >
+                  <option value="">All cities</option>
+                  {cities.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => { clearFilters(); setShowFilters(false); }} className="btn-secondary flex-1">Clear</button>
+              <button onClick={() => setShowFilters(false)} className="btn-primary flex-1">Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

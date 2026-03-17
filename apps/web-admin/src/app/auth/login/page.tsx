@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
             <Shield className="w-7 h-7 text-blue-600" />
           </div>
           <h1 className="font-bold text-blue-600 text-2xl">Dochain Admin</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to the admin panel</p>
+          <p className="text-gray-600 text-sm mt-1">Sign in to the admin panel</p>
         </div>
 
         <div className="card p-8">
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

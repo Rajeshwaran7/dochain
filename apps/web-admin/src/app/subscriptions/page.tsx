@@ -31,18 +31,18 @@ export default function SubscriptionsPage() {
       <div className="md:pl-56">
         <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center">
           <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
-          <h1 className="font-semibold text-gray-800">Subscriptions</h1>
+          <h1 className="font-semibold text-gray-900">Subscriptions</h1>
         </header>
 
         <main className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 text-gray-500">
+            <div className="flex items-center justify-center py-20 text-gray-600">
               <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading subscriptions…
             </div>
           ) : subs.length === 0 ? (
             <div className="card p-12 text-center">
-              <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-500">No subscriptions found</h3>
+              <CreditCard className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-600">No subscriptions found</h3>
             </div>
           ) : (
             <>
@@ -50,12 +50,12 @@ export default function SubscriptionsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 text-left">
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Doctor</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Plan</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Period</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Created</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Doctor</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Plan</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Amount</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Status</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Period</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Created</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -67,32 +67,32 @@ export default function SubscriptionsPage() {
                       return (
                         <tr key={sub.id as string} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                           <td className="px-5 py-4">
-                            <div className="text-gray-800 text-sm font-medium">
+                            <div className="text-gray-900 text-sm font-medium">
                               Dr. {docUser.firstName as string} {docUser.lastName as string}
                             </div>
-                            <div className="text-gray-500 text-xs">{doctor.specialization as string}</div>
+                            <div className="text-gray-600 text-xs">{doctor.specialization as string}</div>
                           </td>
                           <td className="px-5 py-4">
-                            <span className="capitalize text-gray-700 text-sm font-medium">{sub.plan as string}</span>
+                            <span className="capitalize text-gray-900 text-sm font-medium">{sub.plan as string}</span>
                           </td>
                           <td className="px-5 py-4">
-                            <span className="text-gray-800 text-sm font-medium">
+                            <span className="text-gray-900 text-sm font-medium">
                               ₹{Number(sub.amount).toLocaleString('en-IN')}
                             </span>
-                            <span className="text-gray-400 text-xs">/mo</span>
+                            <span className="text-gray-600 text-xs">/mo</span>
                           </td>
                           <td className="px-5 py-4">
                             <span className={STATUS_BADGE[subStatus] ?? 'badge-gray'}>
                               {subStatus}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-gray-500 text-sm">
+                          <td className="px-5 py-4 text-gray-600 text-sm">
                             {sub.currentPeriodStart
                               ? `${new Date(sub.currentPeriodStart as string).toLocaleDateString('en-IN')} — ${new Date(sub.currentPeriodEnd as string).toLocaleDateString('en-IN')}`
                               : '—'
                             }
                           </td>
-                          <td className="px-5 py-4 text-gray-500 text-sm">
+                          <td className="px-5 py-4 text-gray-600 text-sm">
                             {new Date(sub.createdAt as string).toLocaleDateString('en-IN')}
                           </td>
                         </tr>
@@ -107,7 +107,7 @@ export default function SubscriptionsPage() {
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost p-2 disabled:opacity-30">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-gray-500 text-sm">Page {page} of {totalPages}</span>
+                  <span className="text-gray-600 text-sm">Page {page} of {totalPages}</span>
                   <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-ghost p-2 disabled:opacity-30">
                     <ChevronRight className="w-4 h-4" />
                   </button>

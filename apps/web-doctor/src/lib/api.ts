@@ -75,4 +75,5 @@ export const subscriptionsApi = {
 export const reviewsApi = {
   getByDoctor: (doctorId: string, page = 1) => api.get(`/reviews/${doctorId}`, { params: { page } }),
   reply: (reviewId: string, reply: string) => api.post(`/reviews/${reviewId}/reply`, { reply }),
+  delete: (reviewId: string) => api.delete(`/reviews/${reviewId}`),
 };

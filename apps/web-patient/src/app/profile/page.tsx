@@ -49,14 +49,14 @@ export default function PatientProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <nav className="glass sticky top-0 z-40 border-b border-gray-200 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm">
+          <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm">
             <ChevronLeft className="w-4 h-4" /> Dashboard
           </Link>
-          <span className="text-gray-300">|</span>
-          <span className="font-semibold text-gray-800">My Profile</span>
+          <span className="text-gray-500">|</span>
+          <span className="font-semibold text-gray-900">My Profile</span>
         </div>
       </nav>
 
@@ -68,13 +68,13 @@ export default function PatientProfilePage() {
           </div>
           <div>
             <h2 className="font-bold text-xl text-gray-900">{user.firstName} {user.lastName}</h2>
-            <p className="text-gray-500 text-sm">{user.email}</p>
+            <p className="text-gray-600 text-sm">{user.email}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit(update)} className="space-y-5">
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-800 mb-4">Personal Information</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Date of Birth</label>
@@ -114,7 +114,7 @@ export default function PatientProfilePage() {
           </div>
 
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-800 mb-4">Medical Information</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Medical Information</h3>
             <div className="space-y-4">
               <div>
                 <label className="label">Medical History</label>
@@ -128,7 +128,7 @@ export default function PatientProfilePage() {
           </div>
 
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-800 mb-4">Emergency Contact</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Emergency Contact</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Contact Name</label>

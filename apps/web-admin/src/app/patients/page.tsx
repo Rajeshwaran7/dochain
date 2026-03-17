@@ -25,18 +25,18 @@ export default function PatientsPage() {
       <div className="md:pl-56">
         <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center">
           <Users className="w-5 h-5 text-blue-600 mr-2" />
-          <h1 className="font-semibold text-gray-800">Patient Management</h1>
+          <h1 className="font-semibold text-gray-900">Patient Management</h1>
         </header>
 
         <main className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 text-gray-500">
+            <div className="flex items-center justify-center py-20 text-gray-600">
               <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading patients…
             </div>
           ) : patients.length === 0 ? (
             <div className="card p-12 text-center">
-              <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-500">No patients found</h3>
+              <Users className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-600">No patients found</h3>
             </div>
           ) : (
             <>
@@ -44,11 +44,11 @@ export default function PatientsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 text-left">
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Patient</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Location</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-                      <th className="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Actions</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Patient</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Contact</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Location</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Status</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -63,28 +63,28 @@ export default function PatientsPage() {
                                 {(user.firstName as string)?.[0]}{(user.lastName as string)?.[0]}
                               </div>
                               <div>
-                                <div className="text-gray-800 text-sm font-medium">
+                                <div className="text-gray-900 text-sm font-medium">
                                   {user.firstName as string} {user.lastName as string}
                                 </div>
-                                <div className="text-gray-500 text-xs">{patient.gender as string ?? '—'}</div>
+                                <div className="text-gray-600 text-xs">{patient.gender as string ?? '—'}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-1 text-gray-500 text-sm">
+                            <div className="flex items-center gap-1 text-gray-600 text-sm">
                               <Mail className="w-3 h-3" /> {user.email as string}
                             </div>
                             {user.phone && (
-                              <div className="text-gray-500 text-xs mt-0.5">{user.phone as string}</div>
+                              <div className="text-gray-600 text-xs mt-0.5">{user.phone as string}</div>
                             )}
                           </td>
                           <td className="px-5 py-4">
                             {patient.city ? (
-                              <span className="flex items-center gap-1 text-gray-500 text-sm">
+                              <span className="flex items-center gap-1 text-gray-600 text-sm">
                                 <MapPin className="w-3 h-3" /> {patient.city as string}{patient.state ? `, ${patient.state as string}` : ''}
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-sm">—</span>
+                              <span className="text-gray-500 text-sm">—</span>
                             )}
                           </td>
                           <td className="px-5 py-4">
@@ -117,7 +117,7 @@ export default function PatientsPage() {
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost p-2 disabled:opacity-30">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-gray-500 text-sm">Page {page} of {totalPages}</span>
+                  <span className="text-gray-600 text-sm">Page {page} of {totalPages}</span>
                   <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-ghost p-2 disabled:opacity-30">
                     <ChevronRight className="w-4 h-4" />
                   </button>

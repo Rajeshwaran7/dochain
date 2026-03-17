@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: { default: 'Dochain — Doctor Dashboard', template: '%s | Dochain Doctor' },
   description: 'Manage your clinic, appointments and patients on Dochain.',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Dochain' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Dochain Doctor' },
 };
 
 export const viewport: Viewport = {
@@ -26,6 +26,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={jakarta.variable}>
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body className="bg-gray-50 text-gray-900 antialiased">
         <Providers>{children}</Providers>
       </body>

@@ -46,7 +46,7 @@ export default function DoctorsPage() {
       <div className="md:pl-56">
         <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center">
           <Stethoscope className="w-5 h-5 text-blue-600 mr-2" />
-          <h1 className="font-semibold text-gray-800">Doctor Management</h1>
+          <h1 className="font-semibold text-gray-900">Doctor Management</h1>
         </header>
 
         <main className="p-6 space-y-6">
@@ -59,7 +59,7 @@ export default function DoctorsPage() {
                 className={`flex-1 py-2 text-sm rounded-lg font-medium transition-all ${
                   status === tab.value
                     ? 'bg-blue-600 text-white'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {tab.label}
@@ -68,13 +68,13 @@ export default function DoctorsPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 text-gray-500">
+            <div className="flex items-center justify-center py-20 text-gray-600">
               <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading doctors…
             </div>
           ) : doctors.length === 0 ? (
             <div className="card p-12 text-center">
-              <Stethoscope className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-500">No doctors found</h3>
+              <Stethoscope className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <h3 className="font-semibold text-gray-600">No doctors found</h3>
             </div>
           ) : (
             <div className="space-y-3">
@@ -98,7 +98,7 @@ export default function DoctorsPage() {
                             Dr. {user.firstName as string} {user.lastName as string}
                           </div>
                           <div className="text-blue-600 text-sm">{doc.specialization as string}</div>
-                          <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
+                          <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-600">
                             <span className="flex items-center gap-1">
                               <Mail className="w-3 h-3" /> {user.email as string}
                             </span>
@@ -113,7 +113,7 @@ export default function DoctorsPage() {
                               </span>
                             )}
                             {clinic && (
-                              <span className="text-gray-400">Clinic: {clinic.name as string}</span>
+                              <span className="text-gray-600">Clinic: {clinic.name as string}</span>
                             )}
                           </div>
                         </div>
@@ -147,7 +147,7 @@ export default function DoctorsPage() {
                           <button
                             onClick={() => suspend(docId)}
                             disabled={suspending}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 text-xs font-medium transition-all"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 text-xs font-medium transition-all"
                           >
                             <Ban className="w-3.5 h-3.5" /> Suspend
                           </button>
@@ -180,7 +180,7 @@ export default function DoctorsPage() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-gray-500 text-sm">Page {page} of {totalPages}</span>
+              <span className="text-gray-600 text-sm">Page {page} of {totalPages}</span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}

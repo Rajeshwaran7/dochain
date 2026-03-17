@@ -53,7 +53,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md animate-in">
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-2xl font-bold text-cyan-600">Dochain</Link>
-          <h1 className="text-gray-500 text-sm mt-2">Create your patient account</h1>
+          <h1 className="text-gray-600 text-sm mt-2">Create your patient account</h1>
         </div>
 
         <div className="card p-8">
@@ -86,7 +86,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="label">Phone number <span className="text-gray-400">(optional)</span></label>
+              <label className="label">Phone number</label>
               <input {...register('phone')} type="tel" className="input" placeholder="+91 98765 43210" />
               {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone.message}</p>}
             </div>
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               <label className="label">Password</label>
               <div className="relative">
                 <input {...register('password')} type={showPass ? 'text' : 'password'} className="input pr-11" placeholder="Min 8 characters" />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -116,12 +116,12 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p className="text-center text-gray-500 text-sm mt-6">
+          <p className="text-center text-gray-600 text-sm mt-6">
             Already have an account?{' '}
             <Link href="/auth/login" className="text-cyan-600 hover:text-cyan-700 font-medium">Sign in</Link>
           </p>
 
-          <p className="text-center text-gray-400 text-xs mt-4">
+          <p className="text-center text-gray-600 text-xs mt-4">
             Are you a doctor?{' '}
             <a href={process.env.NEXT_PUBLIC_DOCTOR_APP_URL || 'http://localhost:3002/auth/register'} className="text-cyan-600 hover:underline">
               Register here

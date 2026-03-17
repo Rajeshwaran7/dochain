@@ -44,7 +44,7 @@ export default function DoctorLoginPage() {
       <div className="w-full max-w-md animate-in">
         <div className="text-center mb-8">
           <Link href="/" className="font-bold text-violet-600 text-2xl">Dochain</Link>
-          <h1 className="text-gray-500 text-sm mt-2">Doctor Portal</h1>
+          <h1 className="text-gray-600 text-sm mt-2">Doctor Portal</h1>
         </div>
 
         <div className="card p-8">
@@ -54,7 +54,7 @@ export default function DoctorLoginPage() {
             </div>
             <div>
               <h2 className="font-bold text-gray-900">Welcome back, Doctor</h2>
-              <p className="text-gray-500 text-xs">Sign in to manage your practice</p>
+              <p className="text-gray-600 text-xs">Sign in to manage your practice</p>
             </div>
           </div>
 
@@ -90,7 +90,7 @@ export default function DoctorLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -118,7 +118,7 @@ export default function DoctorLoginPage() {
           <div className="mt-5 text-center">
             <div className="relative flex items-center my-4">
               <div className="flex-1 border-t border-gray-200" />
-              <span className="px-3 text-gray-400 text-xs">or</span>
+              <span className="px-3 text-gray-500 text-xs">or</span>
               <div className="flex-1 border-t border-gray-200" />
             </div>
             <a
@@ -135,7 +135,7 @@ export default function DoctorLoginPage() {
             </a>
           </div>
 
-          <p className="text-center text-gray-500 text-sm mt-6">
+          <p className="text-center text-gray-600 text-sm mt-6">
             New to Dochain?{' '}
             <Link href="/auth/register" className="text-violet-600 hover:text-violet-700 font-medium">
               Register as Doctor
