@@ -1,0 +1,1 @@
+export { UpdateDoctorProfileDto } from './index';

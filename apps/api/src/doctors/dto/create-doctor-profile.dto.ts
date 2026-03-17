@@ -1,0 +1,1 @@
+export { CreateDoctorProfileDto } from './index';

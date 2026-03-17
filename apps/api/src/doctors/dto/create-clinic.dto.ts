@@ -1,0 +1,1 @@
+export { CreateClinicDto } from './index';
