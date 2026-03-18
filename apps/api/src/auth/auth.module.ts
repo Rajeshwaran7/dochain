@@ -7,7 +7,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { User, Doctor, Patient } from '@dochain/database';
 
 @Module({
@@ -24,7 +23,7 @@ import { User, Doctor, Patient } from '@dochain/database';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

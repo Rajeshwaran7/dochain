@@ -6,13 +6,10 @@ import {
   Query,
   UseGuards,
   Request,
-  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,10 +22,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -84,29 +78,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto.refreshToken);
-  }
-
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Initiate Google OAuth login' })
-  async googleAuth() {
-    // Redirects to Google
-  }
-
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Google OAuth callback' })
-  async googleCallback(@Request() req, @Res() res) {
-    const result = await this.authService.googleLogin(req.user);
-    const role = result.user['role'] as string;
-    const clientUrl = role === 'doctor'
-      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
-      : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
-    const params = new URLSearchParams({
-      token: result.accessToken,
-      refreshToken: result.refreshToken,
-    });
-    return res.redirect(`${clientUrl}/auth/callback?${params.toString()}`);
   }
 
   @Get('me')

@@ -10,7 +10,8 @@ out/
 build/
 *.tsbuildinfo
 
-# Environment
+# Environment (never commit real secrets)
+.env
 .env.local
 .env.production
 .env.staging

@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User, UserRole, AuthProvider, Doctor, Patient } from '@dochain/database';
+import { User, UserRole, Doctor, Patient } from '@dochain/database';
 import { MailService } from '../mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -171,36 +171,6 @@ export class AuthService {
     await this.userRepo.save(user);
 
     return { message: 'Password reset successfully' };
-  }
-
-  async googleLogin(googleUser: { googleId: string; email: string; firstName: string; lastName: string; picture?: string }) {
-    let user = await this.userRepo.findOne({ where: { googleId: googleUser.googleId } });
-
-    if (!user) {
-      user = await this.userRepo.findOne({ where: { email: googleUser.email } });
-      if (user) {
-        user.googleId = googleUser.googleId;
-        user.provider = AuthProvider.GOOGLE;
-        await this.userRepo.save(user);
-      } else {
-        user = this.userRepo.create({
-          email: googleUser.email,
-          firstName: googleUser.firstName,
-          lastName: googleUser.lastName,
-          avatar: googleUser.picture,
-          googleId: googleUser.googleId,
-          provider: AuthProvider.GOOGLE,
-          isEmailVerified: true,
-          role: UserRole.PATIENT,
-        });
-        await this.userRepo.save(user);
-        const patient = this.patientRepo.create({ userId: user.id, user });
-        await this.patientRepo.save(patient);
-      }
-    }
-
-    const tokens = this.generateTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
   }
 
   async refreshToken(refreshToken: string) {
