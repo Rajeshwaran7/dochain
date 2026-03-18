@@ -1,0 +1,9 @@
+<h2 style="color: #0f172a; margin: 0 0 16px 0;">New Appointment Request</h2>
+<p style="color: #334155; line-height: 1.6; margin: 0 0 16px 0;">Dr. {{doctorName}}, a new appointment has been requested and is awaiting your confirmation.</p>
+<div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 16px 0;">
+  <p style="margin: 4px 0; color: #334155;"><strong>Patient:</strong> {{patientName}}</p>
+  <p style="margin: 4px 0; color: #334155;"><strong>Date:</strong> {{date}}</p>
+  <p style="margin: 4px 0; color: #334155;"><strong>Time:</strong> {{time}}</p>
+  {{#if symptoms}}<p style="margin: 4px 0; color: #334155;"><strong>Symptoms/Notes:</strong> {{symptoms}}</p>{{/if}}
+</div>
+<p style="color: #64748b; font-size: 14px; margin: 0;">Please confirm or decline this appointment from your dashboard.</p>

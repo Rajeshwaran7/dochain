@@ -18,6 +18,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
@@ -52,9 +53,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Resend email verification link' })
+  @ApiOperation({ summary: 'Resend email verification link (authenticated)' })
   async resendVerification(@Request() req) {
     return this.authService.resendVerificationEmail(req.user.id);
+  }
+
+  @Post('resend-verification-by-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend verification link by email (public)' })
+  async resendVerificationByEmail(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerificationByEmail(dto.email);
   }
 
   @Post('forgot-password')

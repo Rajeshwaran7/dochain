@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Loader2, Stethoscope } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Stethoscope, Mail } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -15,17 +15,25 @@ const schema = z.object({
 });
 type F = z.infer<typeof schema>;
 
+const EMAIL_NOT_VERIFIED_MSG = 'Email not verified.';
+
 export default function DoctorLoginPage() {
   const [showPass, setShowPass] = useState(false);
-  const [error, setError]       = useState('');
+  const [error, setError] = useState('');
+  const [showResend, setShowResend] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendPending, setResendPending] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<F>({
     resolver: zodResolver(schema),
   });
-  const setAuth = useAuthStore(s => s.setAuth);
-  const router  = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const router = useRouter();
 
   const onSubmit = async (data: F) => {
     setError('');
+    setShowResend(false);
+    setResendSuccess(false);
     try {
       const res = await authApi.login(data);
       if (res.data.user.role !== 'doctor' && res.data.user.role !== 'admin') {
@@ -34,8 +42,27 @@ export default function DoctorLoginPage() {
       }
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
       router.push('/dashboard');
-    } catch (e: any) {
-      setError(e?.response?.data?.message || 'Login failed. Please try again.');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Login failed. Please try again.';
+      setError(msg);
+      if (msg.startsWith(EMAIL_NOT_VERIFIED_MSG)) {
+        setShowResend(true);
+        setResendEmail(data.email);
+      }
+    }
+  };
+
+  const onResendVerification = async () => {
+    if (!resendEmail) return;
+    setResendPending(true);
+    setError('');
+    try {
+      await authApi.resendVerificationByEmail(resendEmail);
+      setResendSuccess(true);
+    } catch {
+      setError('Failed to send verification email. Try again later.');
+    } finally {
+      setResendPending(false);
     }
   };
 
@@ -61,6 +88,28 @@ export default function DoctorLoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-5">
               {error}
+            </div>
+          )}
+
+          {showResend && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3 mb-5">
+              <p className="font-medium mb-2">Verify your email to sign in</p>
+              <p className="text-amber-700 text-xs mb-3">
+                We sent a link to <strong>{resendEmail}</strong>. Click it to verify, or request a new link below.
+              </p>
+              {resendSuccess ? (
+                <p className="text-green-700 text-xs">Verification email sent. Check your inbox.</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onResendVerification}
+                  disabled={resendPending}
+                  className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-medium text-xs"
+                >
+                  {resendPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  {resendPending ? 'Sending…' : 'Resend verification email'}
+                </button>
+              )}
             </div>
           )}
 

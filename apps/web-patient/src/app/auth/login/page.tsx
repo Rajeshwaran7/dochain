@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Mail } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -15,9 +15,15 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+const EMAIL_NOT_VERIFIED_MSG = 'Email not verified.';
+
 export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
+  const [showResend, setShowResend] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendPending, setResendPending] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -25,19 +31,43 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') ?? '/dashboard';
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) router.replace('/dashboard');
-  }, [hasHydrated, isAuthenticated, router]);
+    if (hasHydrated && isAuthenticated) router.replace(redirectTo.startsWith('/') ? redirectTo : '/dashboard');
+  }, [hasHydrated, isAuthenticated, router, redirectTo]);
 
   const onSubmit = async (data: FormData) => {
     setError('');
+    setShowResend(false);
+    setResendSuccess(false);
     try {
       const res = await authApi.login(data);
       setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e?.response?.data?.message || 'Login failed. Please try again.');
+      const target = redirectTo.startsWith('/') ? redirectTo : '/dashboard';
+      router.push(target);
+    } catch (e: unknown) {
+    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Login failed. Please try again.';
+      setError(msg);
+      if (msg.startsWith(EMAIL_NOT_VERIFIED_MSG)) {
+        setShowResend(true);
+        setResendEmail(data.email);
+      }
+    }
+  };
+
+  const onResendVerification = async () => {
+    if (!resendEmail) return;
+    setResendPending(true);
+    setError('');
+    try {
+      await authApi.resendVerificationByEmail(resendEmail);
+      setResendSuccess(true);
+    } catch {
+      setError('Failed to send verification email. Try again later.');
+    } finally {
+      setResendPending(false);
     }
   };
 
@@ -56,6 +86,28 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-5">
               {error}
+            </div>
+          )}
+
+          {showResend && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3 mb-5">
+              <p className="font-medium mb-2">Verify your email to sign in</p>
+              <p className="text-amber-700 text-xs mb-3">
+                We sent a link to <strong>{resendEmail}</strong>. Click it to verify, or request a new link below.
+              </p>
+              {resendSuccess ? (
+                <p className="text-green-700 text-xs">Verification email sent. Check your inbox.</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onResendVerification}
+                  disabled={resendPending}
+                  className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-medium text-xs"
+                >
+                  {resendPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  {resendPending ? 'Sending…' : 'Resend verification email'}
+                </button>
+              )}
             </div>
           )}
 

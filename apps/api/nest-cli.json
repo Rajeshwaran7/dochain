@@ -6,6 +6,7 @@
   "compilerOptions": {
     "deleteOutDir": false,
     "webpack": false,
-    "plugins": []
+    "plugins": [],
+    "assets": [{ "include": "mail/templates/**/*.hbs", "watchAssets": true }]
   }
 }

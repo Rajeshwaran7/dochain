@@ -50,14 +50,15 @@ export class AppointmentsService {
     const doctor = await this.doctorRepo.findOne({ where: { id: dto.doctorId } });
     if (!doctor) throw new NotFoundException('Doctor not found');
 
-    const existing = await this.appointmentRepo.findOne({
-      where: {
-        doctorId: dto.doctorId,
-        appointmentDate: dto.appointmentDate as unknown as Date,
-        startTime: dto.startTime,
-        status: AppointmentStatus.CONFIRMED,
-      },
-    });
+    const existing = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .where('a.doctorId = :doctorId', { doctorId: dto.doctorId })
+      .andWhere('a.appointmentDate = :date', { date: dto.appointmentDate })
+      .andWhere('a.startTime = :startTime', { startTime: dto.startTime })
+      .andWhere('a.status IN (:...statuses)', {
+        statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+      })
+      .getOne();
     if (existing) throw new BadRequestException('This slot is already booked');
 
     const fee = doctor.consultationFee ?? 0;
@@ -66,6 +67,7 @@ export class AppointmentsService {
       ...dto,
       patientId: patient.id,
       fee,
+      status: AppointmentStatus.PENDING,
     });
     const saved = await this.appointmentRepo.save(appointment);
 
@@ -81,6 +83,12 @@ export class AppointmentsService {
           notes: { appointmentId: saved.id, doctorId: dto.doctorId },
         });
 
+        const withRelations = await this.appointmentRepo.findOne({
+          where: { id: saved.id },
+          relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
+        });
+        if (withRelations) this.sendBookingEmails(withRelations);
+
         return {
           appointment: saved,
           razorpayOrderId: order.id,
@@ -88,14 +96,40 @@ export class AppointmentsService {
           amount: Math.round(fee * 100),
         };
       } catch (err) {
-        this.logger.warn(`Razorpay order creation failed, confirming without payment: ${(err as Error).message}`);
+        this.logger.warn(`Razorpay order creation failed: ${(err as Error).message}`);
       }
     }
 
     saved.isPaid = fee === 0;
-    saved.status = AppointmentStatus.CONFIRMED;
     await this.appointmentRepo.save(saved);
+    const withRelations = await this.appointmentRepo.findOne({
+      where: { id: saved.id },
+      relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
+    });
+    if (withRelations) this.sendBookingEmails(withRelations);
     return { appointment: saved };
+  }
+
+  /** Sends booking confirmation to patient and new-request notification to doctor. */
+  private async sendBookingEmails(appt: Appointment) {
+    const patientName = `${appt.patient.user.firstName} ${appt.patient.user.lastName}`;
+    const doctorName = `${appt.doctor.user.firstName} ${appt.doctor.user.lastName}`;
+    const dateStr = String(appt.appointmentDate);
+    await this.mailService.sendAppointmentBookedToPatient(
+      appt.patient.user.email,
+      patientName,
+      doctorName,
+      dateStr,
+      appt.startTime,
+    );
+    await this.mailService.sendNewAppointmentToDoctor(
+      appt.doctor.user.email,
+      doctorName,
+      patientName,
+      dateStr,
+      appt.startTime,
+      appt.symptoms ?? undefined,
+    );
   }
 
   /** Verifies Razorpay payment signature and confirms the appointment. */
@@ -120,7 +154,6 @@ export class AppointmentsService {
 
     appointment.isPaid = true;
     appointment.paymentId = razorpayPaymentId;
-    appointment.status = AppointmentStatus.CONFIRMED;
     return this.appointmentRepo.save(appointment);
   }
 
@@ -161,11 +194,10 @@ export class AppointmentsService {
   ) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id },
-      relations: ['doctor', 'patient'],
+      relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
 
-    // Authorization check
     const doctor = await this.doctorRepo.findOne({ where: { userId } });
     const patient = await this.patientRepo.findOne({ where: { userId } });
 
@@ -179,11 +211,62 @@ export class AppointmentsService {
       patient?.id !== appointment.patientId
     ) throw new ForbiddenException();
 
+    if (userRole === UserRole.PATIENT && dto.status !== AppointmentStatus.CANCELLED) {
+      throw new ForbiddenException('Patients can only cancel appointments. Confirmation is done by the doctor.');
+    }
+
+    const previousStatus = appointment.status;
     appointment.status = dto.status;
     if (dto.notes) appointment.doctorNotes = dto.notes;
     if (dto.cancellationReason) appointment.cancellationReason = dto.cancellationReason;
 
-    return this.appointmentRepo.save(appointment);
+    const saved = await this.appointmentRepo.save(appointment);
+    this.sendStatusChangeEmails(appointment, previousStatus, dto.status).catch((err) =>
+      this.logger.warn(`Status change emails failed: ${(err as Error).message}`),
+    );
+    return saved;
+  }
+
+  /** Sends confirm/cancel emails when status changes. */
+  private async sendStatusChangeEmails(
+    appt: Appointment,
+    previousStatus: AppointmentStatus,
+    newStatus: AppointmentStatus,
+  ) {
+    const patientName = `${appt.patient.user.firstName} ${appt.patient.user.lastName}`;
+    const doctorName = `${appt.doctor.user.firstName} ${appt.doctor.user.lastName}`;
+    const dateStr = String(appt.appointmentDate);
+
+    if (newStatus === AppointmentStatus.CONFIRMED && previousStatus !== AppointmentStatus.CONFIRMED) {
+      await this.mailService.sendAppointmentConfirmed(
+        appt.patient.user.email,
+        patientName,
+        doctorName,
+        dateStr,
+        appt.startTime,
+      );
+    }
+
+    if (newStatus === AppointmentStatus.CANCELLED) {
+      await this.mailService.sendAppointmentCancelled(
+        appt.patient.user.email,
+        patientName,
+        doctorName,
+        dateStr,
+        appt.startTime,
+        true,
+        appt.cancellationReason ?? undefined,
+      );
+      await this.mailService.sendAppointmentCancelled(
+        appt.doctor.user.email,
+        doctorName,
+        patientName,
+        dateStr,
+        appt.startTime,
+        false,
+        appt.cancellationReason ?? undefined,
+      );
+    }
   }
 
   async getById(id: string) {
@@ -236,14 +319,15 @@ export class AppointmentsService {
       duration = availability.slotDurationMinutes;
     }
 
-    const bookedSlots = await this.appointmentRepo.find({
-      where: {
-        doctorId,
-        appointmentDate: date as any,
-        status: AppointmentStatus.CONFIRMED,
-      },
-      select: ['startTime'],
-    });
+    const bookedSlots = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .select('a.startTime')
+      .where('a.doctorId = :doctorId', { doctorId })
+      .andWhere('a.appointmentDate = :date', { date })
+      .andWhere('a.status IN (:...statuses)', {
+        statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+      })
+      .getMany();
 
     const booked = new Set(bookedSlots.map((a) => a.startTime));
     return this.generateTimeSlots(startTime, endTime, duration, booked);

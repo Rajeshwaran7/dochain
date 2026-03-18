@@ -20,13 +20,15 @@ api.interceptors.response.use(
       orig._retry = true;
       try {
         const refresh = localStorage.getItem('dochain_doctor_refresh');
-        if (!refresh) throw new Error();
+        if (!refresh) throw new Error('No refresh token');
         const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken: refresh });
         localStorage.setItem('dochain_doctor_token', data.accessToken);
+        if (data.refreshToken) localStorage.setItem('dochain_doctor_refresh', data.refreshToken);
         orig.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(orig);
       } catch {
-        localStorage.removeItem('dochain_doctor_token');
+        const { useAuthStore } = await import('@/store/auth.store');
+        useAuthStore.getState().clearAuth();
         window.location.href = '/auth/login';
       }
     }
@@ -40,6 +42,8 @@ export const authApi = {
   me:       ()       => api.get('/auth/me'),
   verifyEmail: (token: string) => api.get('/auth/verify-email', { params: { token } }),
   resendVerification: () => api.post('/auth/resend-verification'),
+  resendVerificationByEmail: (email: string) =>
+    api.post('/auth/resend-verification-by-email', { email }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token: string, newPassword: string) =>
     api.post('/auth/reset-password', { token, newPassword }),

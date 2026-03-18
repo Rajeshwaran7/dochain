@@ -34,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== 'undefined') {
           localStorage.setItem('dochain_token', token);
           localStorage.setItem('dochain_refresh', refreshToken);
+          document.cookie = 'dochain_auth=1; path=/; max-age=2592000; SameSite=Lax';
         }
         set({ user, token, refreshToken, isAuthenticated: true });
       },
@@ -42,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== 'undefined') {
           localStorage.removeItem('dochain_token');
           localStorage.removeItem('dochain_refresh');
+          document.cookie = 'dochain_auth=; path=/; max-age=0';
         }
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
       },

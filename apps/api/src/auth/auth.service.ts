@@ -60,7 +60,10 @@ export class AuthService {
       await this.doctorRepo.save(doctor);
     }
 
-    await this.mailService.sendVerificationEmail(user.email, user.firstName, verificationToken);
+    const baseUrl = user.role === UserRole.DOCTOR
+      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+      : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+    await this.mailService.sendVerificationEmail(user.email, user.firstName, verificationToken, baseUrl);
 
     const tokens = this.generateTokens(user);
     return { user: this.sanitizeUser(user), ...tokens };
@@ -88,18 +91,42 @@ export class AuthService {
     user.emailVerificationToken = newToken;
     await this.userRepo.save(user);
 
-    await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken);
+    const baseUrl = user.role === UserRole.DOCTOR
+      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+      : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+    await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
     return { message: 'Verification email sent' };
+  }
+
+  /**
+   * Resends verification email by email address (public endpoint).
+   * Always returns the same message to prevent email enumeration.
+   */
+  async resendVerificationByEmail(email: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (user && !user.isEmailVerified) {
+      const newToken = crypto.randomBytes(32).toString('hex');
+      user.emailVerificationToken = newToken;
+      await this.userRepo.save(user);
+      const baseUrl = user.role === UserRole.DOCTOR
+        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+      await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
+    }
+    return { message: 'If your email is not verified, we have sent a new verification link.' };
   }
 
   async login(dto: LoginDto) {
     const user = await this.userRepo.findOne({
       where: { email: dto.email },
-      select: ['id', 'email', 'password', 'firstName', 'lastName', 'role', 'isActive', 'avatar'],
+      select: ['id', 'email', 'password', 'firstName', 'lastName', 'role', 'isActive', 'isEmailVerified', 'avatar'],
     });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Email not verified. Please check your inbox or resend the verification link.');
+    }
 
     const isValid = await user.validatePassword(dto.password);
     if (!isValid) throw new UnauthorizedException('Invalid credentials');
@@ -120,7 +147,10 @@ export class AuthService {
       user.passwordResetToken = resetToken;
       user.passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       await this.userRepo.save(user);
-      await this.mailService.sendPasswordResetEmail(user.email, user.firstName, resetToken);
+      const baseUrl = user.role === UserRole.DOCTOR
+        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+      await this.mailService.sendPasswordResetEmail(user.email, user.firstName, resetToken, baseUrl);
     }
 
     return { message: 'If the email exists, a reset link has been sent' };

@@ -16,12 +16,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
+// Auto-refresh on 401; skip for auth endpoints so login/register can show errors
+const isAuthEndpoint = (url?: string) =>
+  typeof url === 'string' && /\/auth\/(login|register)$/.test((url ?? '').replace(API_URL, '').split('?')[0]);
+
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config;
     if (err.response?.status === 401 && !original._retry) {
+      if (isAuthEndpoint(original?.url)) return Promise.reject(err);
       original._retry = true;
       try {
         const refresh = localStorage.getItem('dochain_refresh');
@@ -49,6 +53,8 @@ export const authApi = {
   me: () => api.get('/auth/me'),
   verifyEmail: (token: string) => api.get('/auth/verify-email', { params: { token } }),
   resendVerification: () => api.post('/auth/resend-verification'),
+  resendVerificationByEmail: (email: string) =>
+    api.post('/auth/resend-verification-by-email', { email }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token: string, newPassword: string) =>
     api.post('/auth/reset-password', { token, newPassword }),
