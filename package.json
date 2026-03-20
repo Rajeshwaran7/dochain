@@ -13,10 +13,13 @@
     "db:migrate": "nx run database:migrate",
     "db:seed": "nx run api:seed",
     "build:api": "npm run build --workspace=@dochain/api",
-    "start:api:prod": "npm run start --workspace=@dochain/api"
+    "start:api:prod": "npm run start --workspace=@dochain/api",
+    "build:web-patient": "npm run build --workspace=@dochain/web-patient",
+    "build:web-doctor": "npm run build --workspace=@dochain/web-doctor",
+    "build:web-admin": "npm run build --workspace=@dochain/web-admin"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.0.0"
   },
   "private": true,
   "devDependencies": {
