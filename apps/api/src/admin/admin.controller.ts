@@ -6,7 +6,7 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole, DoctorStatus } from '@dochain/database';
+import { UserRole, DoctorStatus, SubscriptionStatus } from '@dochain/database';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -58,8 +58,24 @@ export class AdminController {
 
   @Get('subscriptions')
   @ApiOperation({ summary: 'List all subscriptions' })
-  async listSubscriptions(@Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.adminService.listSubscriptions(+page, +limit);
+  async listSubscriptions(
+    @Query('status') status?: SubscriptionStatus,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.adminService.listSubscriptions(status, +page, +limit);
+  }
+
+  @Put('subscriptions/:id/cancel')
+  @ApiOperation({ summary: 'Cancel a subscription (admin)' })
+  async cancelSubscription(@Param('id') id: string, @Body('reason') reason?: string) {
+    return this.adminService.cancelSubscription(id, reason);
+  }
+
+  @Put('subscriptions/:id/status')
+  @ApiOperation({ summary: 'Update subscription status (admin)' })
+  async updateSubscriptionStatus(@Param('id') id: string, @Body('status') status: SubscriptionStatus) {
+    return this.adminService.updateSubscriptionStatus(id, status);
   }
 
   @Put('users/:id/toggle')

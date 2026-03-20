@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
-  Subscription, SubscriptionPlan, SubscriptionStatus, PLAN_PRICES, Doctor,
+  Subscription, SubscriptionPlan, SubscriptionStatus, PLAN_PRICES, PLAN_FEATURES, Doctor,
 } from '@dochain/database';
 import * as crypto from 'crypto';
 
@@ -52,16 +52,31 @@ export class SubscriptionsService {
 
     // Create Razorpay subscription
     const razorpayPlanId = RAZORPAY_PLAN_IDS[plan];
-    const razorpaySubscription = await this.razorpay.subscriptions.create({
-      plan_id: razorpayPlanId,
-      customer_notify: 1,
-      quantity: 1,
-      total_count: 12,
-      notes: {
-        doctorId: doctor.id,
-        plan,
-      },
-    });
+    let razorpaySubscription: { id: string };
+    try {
+      razorpaySubscription = await this.razorpay.subscriptions.create({
+        plan_id: razorpayPlanId,
+        customer_notify: 1,
+        quantity: 1,
+        total_count: 12,
+        notes: {
+          doctorId: doctor.id,
+          plan,
+        },
+      });
+    } catch (err: unknown) {
+      const statusCode = (err as { statusCode?: number })?.statusCode;
+      const code = (err as { error?: { code?: string } })?.error?.code;
+      const desc = (err as { error?: { description?: string } })?.error?.description;
+      if (statusCode === 401 || code === 'BAD_REQUEST_ERROR') {
+        this.logger.warn('Razorpay authentication failed. Set valid RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
+        throw new BadRequestException(
+          'Payment provider authentication failed. Please configure valid Razorpay credentials (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) in .env.',
+        );
+      }
+      this.logger.error(`Razorpay error: ${desc ?? (err as Error).message}`);
+      throw new BadRequestException(desc ?? (err as Error).message ?? 'Payment provider request failed.');
+    }
 
     const sub = this.subRepo.create({
       doctorId: doctor.id,
@@ -80,19 +95,27 @@ export class SubscriptionsService {
     };
   }
 
-  async handleWebhook(payload: any, signature: string) {
+  /**
+   * Handles Razorpay webhook. Signature must be verified using the raw body.
+   * @param rawBody - Raw request body (Buffer or string) as received from Razorpay
+   * @param payload - Parsed JSON payload for processing
+   * @param signature - x-razorpay-signature header value
+   */
+  async handleWebhook(rawBody: Buffer | string, payload: Record<string, unknown>, signature: string) {
     const webhookSecret = this.configService.get('RAZORPAY_WEBHOOK_SECRET');
+    const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody, 'utf8');
     const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(JSON.stringify(payload))
+      .createHmac('sha256', webhookSecret ?? '')
+      .update(body)
       .digest('hex');
 
     if (expectedSignature !== signature) {
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    const event = payload.event;
-    const entity = payload.payload?.subscription?.entity;
+    const event = payload.event as string;
+    const payloadData = payload.payload as { subscription?: { entity?: { id: string; current_start?: number; current_end?: number } }; payment?: { entity?: { id: string } } } | undefined;
+    const entity = payloadData?.subscription?.entity;
 
     this.logger.log(`Razorpay webhook: ${event}`);
 
@@ -111,7 +134,7 @@ export class SubscriptionsService {
         break;
       case 'subscription.charged':
         sub.status = SubscriptionStatus.ACTIVE;
-        sub.lastPaymentId = payload.payload?.payment?.entity?.id;
+        sub.lastPaymentId = payloadData?.payment?.entity?.id;
         sub.currentPeriodEnd = new Date(entity.current_end * 1000);
         break;
       case 'subscription.cancelled':
@@ -125,7 +148,9 @@ export class SubscriptionsService {
 
     await this.subRepo.save(sub);
 
-    // Update doctor featured status
+    if (sub.plan === SubscriptionPlan.FEATURED && (sub.status === SubscriptionStatus.CANCELLED || sub.status === SubscriptionStatus.EXPIRED)) {
+      await this.doctorRepo.update(sub.doctorId, { isFeatured: false, featuredUntil: null as unknown as Date });
+    }
     if (sub.plan === SubscriptionPlan.FEATURED && sub.status === SubscriptionStatus.ACTIVE) {
       await this.doctorRepo.update(sub.doctorId, {
         isFeatured: true,
@@ -156,7 +181,17 @@ export class SubscriptionsService {
     if (!sub) throw new NotFoundException('No active subscription');
 
     if (sub.razorpaySubscriptionId) {
-      await this.razorpay.subscriptions.cancel(sub.razorpaySubscriptionId);
+      try {
+        await this.razorpay.subscriptions.cancel(sub.razorpaySubscriptionId);
+      } catch (err: unknown) {
+        const statusCode = (err as { statusCode?: number })?.statusCode;
+        if (statusCode === 401) {
+          throw new BadRequestException(
+            'Payment provider authentication failed. Please configure valid Razorpay credentials in .env.',
+          );
+        }
+        throw new BadRequestException((err as { error?: { description?: string } })?.error?.description ?? (err as Error).message ?? 'Failed to cancel at payment provider.');
+      }
     }
 
     sub.status = SubscriptionStatus.CANCELLED;
@@ -165,11 +200,57 @@ export class SubscriptionsService {
     return this.subRepo.save(sub);
   }
 
+  /**
+   * Cancel a subscription by ID (admin only). Cancels in Razorpay if linked.
+   */
+  async cancelSubscriptionById(subscriptionId: string, reason?: string) {
+    const sub = await this.subRepo.findOne({ where: { id: subscriptionId } });
+    if (!sub) throw new NotFoundException('Subscription not found');
+    if (sub.status === SubscriptionStatus.CANCELLED) return sub;
+
+    if (sub.razorpaySubscriptionId) {
+      try {
+        await this.razorpay.subscriptions.cancel(sub.razorpaySubscriptionId);
+      } catch (err) {
+        this.logger.warn(`Razorpay cancel failed for ${sub.razorpaySubscriptionId}: ${err}`);
+      }
+    }
+
+    sub.status = SubscriptionStatus.CANCELLED;
+    sub.cancelledAt = new Date();
+    sub.cancelReason = reason ?? 'Cancelled by admin';
+    return this.subRepo.save(sub);
+  }
+
+  /**
+   * Update subscription status (admin only). Use for support overrides.
+   */
+  async updateSubscriptionStatus(subscriptionId: string, status: SubscriptionStatus) {
+    const sub = await this.subRepo.findOne({ where: { id: subscriptionId } });
+    if (!sub) throw new NotFoundException('Subscription not found');
+
+    sub.status = status;
+    if (status === SubscriptionStatus.CANCELLED) sub.cancelledAt = new Date();
+
+    const saved = await this.subRepo.save(sub);
+
+    if (sub.plan === SubscriptionPlan.FEATURED && status !== SubscriptionStatus.ACTIVE) {
+      await this.doctorRepo.update(sub.doctorId, { isFeatured: false, featuredUntil: null as unknown as Date });
+    }
+    if (sub.plan === SubscriptionPlan.FEATURED && status === SubscriptionStatus.ACTIVE) {
+      await this.doctorRepo.update(sub.doctorId, {
+        isFeatured: true,
+        featuredUntil: sub.currentPeriodEnd ?? undefined,
+      });
+    }
+    return saved;
+  }
+
   getPlans() {
     return Object.values(SubscriptionPlan).map((plan) => ({
       plan,
       price: PLAN_PRICES[plan],
-      features: require('@dochain/database').PLAN_FEATURES[plan],
+      features: PLAN_FEATURES[plan],
     }));
   }
 }

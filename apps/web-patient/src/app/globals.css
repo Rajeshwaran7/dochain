@@ -64,6 +64,23 @@
            transition-all duration-150;
   }
 
+  .select {
+    @apply w-full min-h-[44px] cursor-pointer appearance-none rounded-xl border border-gray-200
+           bg-white px-4 py-2.5 pr-11 text-left text-sm font-medium text-gray-900 shadow-sm
+           transition-all duration-150
+           hover:border-cyan-200 hover:bg-cyan-50/30
+           focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/25
+           disabled:cursor-not-allowed disabled:opacity-60;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230891b2' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.125rem;
+  }
+
+  .select-lg {
+    @apply min-h-[48px] py-3;
+  }
+
   .label {
     @apply block text-sm font-medium text-gray-800 mb-1.5;
   }

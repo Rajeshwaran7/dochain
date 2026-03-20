@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
+/** Matches `basePath` in `next.config.js` so hard redirects stay under `/doctor/...`. */
+const APP_BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const api = axios.create({ baseURL: API_URL, headers: { 'Content-Type': 'application/json' } });
 
 api.interceptors.request.use((config) => {
@@ -29,7 +32,7 @@ api.interceptors.response.use(
       } catch {
         const { useAuthStore } = await import('@/store/auth.store');
         useAuthStore.getState().clearAuth();
-        window.location.href = '/auth/login';
+        window.location.href = `${APP_BASE}/auth/login`;
       }
     }
     return Promise.reject(err);

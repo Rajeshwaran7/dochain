@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
+/** Matches `basePath` in `next.config.js` so hard redirects stay under `/admin/...`. */
+const APP_BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const api = axios.create({ baseURL: API_URL, headers: { 'Content-Type': 'application/json' } });
 
 api.interceptors.request.use((config) => {
@@ -27,7 +30,7 @@ api.interceptors.response.use(
         return api(orig);
       } catch {
         localStorage.removeItem('dochain_admin_token');
-        window.location.href = '/auth/login';
+        window.location.href = `${APP_BASE}/auth/login`;
       }
     }
     return Promise.reject(err);
@@ -46,6 +49,8 @@ export const adminApi = {
   rejectDoctor:       (id: string, reason?: string) => api.put(`/admin/doctors/${id}/reject`, { reason }),
   suspendDoctor:      (id: string) => api.put(`/admin/doctors/${id}/suspend`),
   listPatients:       (params?: Record<string, unknown>) => api.get('/admin/patients', { params }),
-  listSubscriptions:  (params?: Record<string, unknown>) => api.get('/admin/subscriptions', { params }),
-  toggleUser:         (id: string) => api.put(`/admin/users/${id}/toggle`),
+  listSubscriptions:        (params?: Record<string, unknown>) => api.get('/admin/subscriptions', { params }),
+  cancelSubscription:      (id: string, reason?: string) => api.put(`/admin/subscriptions/${id}/cancel`, { reason }),
+  updateSubscriptionStatus: (id: string, status: string) => api.put(`/admin/subscriptions/${id}/status`, { status }),
+  toggleUser:               (id: string) => api.put(`/admin/users/${id}/toggle`),
 };

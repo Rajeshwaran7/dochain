@@ -123,7 +123,10 @@ export default function RegisterPage() {
 
           <p className="text-center text-gray-600 text-xs mt-4">
             Are you a doctor?{' '}
-            <a href={process.env.NEXT_PUBLIC_DOCTOR_APP_URL || 'http://localhost:3002/auth/register'} className="text-cyan-600 hover:underline">
+            <a
+              href={`${process.env.NEXT_PUBLIC_DOCTOR_APP_URL ?? 'http://localhost:3002/doctor'}/auth/register`}
+              className="text-cyan-600 hover:underline"
+            >
               Register here
             </a>
           </p>

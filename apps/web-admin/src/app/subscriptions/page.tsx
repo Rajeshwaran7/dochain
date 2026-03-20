@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CreditCard, Loader2, ChevronLeft, ChevronRight, MoreVertical, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
-import { useSubscriptions } from '@/hooks/useApi';
+import { useSubscriptions, useCancelSubscription, useUpdateSubscriptionStatus } from '@/hooks/useApi';
 import Sidebar from '@/components/Sidebar';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -11,27 +11,61 @@ const STATUS_BADGE: Record<string, string> = {
   pending:   'badge-yellow',
   cancelled: 'badge-red',
   expired:   'badge-gray',
+  inactive:  'badge-gray',
 };
+
+const STATUS_OPTIONS = ['active', 'pending', 'cancelled', 'expired', 'inactive'] as const;
 
 export default function SubscriptionsPage() {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [cancelModal, setCancelModal] = useState<{ id: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{ id: string; current: string } | null>(null);
 
   useEffect(() => { if (!isAuthenticated) router.push('/auth/login'); }, [isAuthenticated]);
 
-  const { data, isLoading } = useSubscriptions({ page, limit: 20 });
+  const params = { page, limit: 20, ...(statusFilter ? { status: statusFilter } : {}) };
+  const { data, isLoading } = useSubscriptions(params);
+  const { mutateAsync: cancelSub, isPending: isCancelling } = useCancelSubscription();
+  const { mutateAsync: updateStatus, isPending: isUpdating } = useUpdateSubscriptionStatus();
 
   const subs = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
+
+  const handleCancel = async () => {
+    if (!cancelModal) return;
+    await cancelSub({ id: cancelModal.id });
+    setCancelModal(null);
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!statusModal) return;
+    await updateStatus({ id: statusModal.id, status: newStatus });
+    setStatusModal(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="md:pl-56">
-        <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center">
-          <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
-          <h1 className="font-semibold text-gray-900">Subscriptions</h1>
+        <header className="glass sticky top-0 z-30 border-b border-gray-200 px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CreditCard className="w-5 h-5 text-blue-600 shrink-0" />
+            <h1 className="font-semibold text-gray-900">Subscriptions</h1>
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700"
+            aria-label="Filter by status"
+          >
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            ))}
+          </select>
         </header>
 
         <main className="p-6">
@@ -56,6 +90,7 @@ export default function SubscriptionsPage() {
                       <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Status</th>
                       <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Period</th>
                       <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Created</th>
+                      <th className="px-5 py-3 text-xs font-medium text-gray-600 uppercase tracking-wide">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -95,12 +130,87 @@ export default function SubscriptionsPage() {
                           <td className="px-5 py-4 text-gray-600 text-sm">
                             {new Date(sub.createdAt as string).toLocaleDateString('en-IN')}
                           </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              {(subStatus === 'active' || subStatus === 'pending') && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCancelModal({ id: sub.id as string })}
+                                  disabled={isCancelling}
+                                  className="text-xs text-red-600 hover:text-red-700 hover:underline disabled:opacity-50"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setStatusModal({ id: sub.id as string, current: subStatus })}
+                                disabled={isUpdating}
+                                className="p-1 text-gray-500 hover:text-gray-700 rounded disabled:opacity-50"
+                                title="Change status"
+                                aria-label="Change status"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
+
+              {cancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="admin-cancel-title">
+                  <div className="card max-w-md w-full p-6 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 id="admin-cancel-title" className="font-semibold text-gray-900">Cancel this subscription?</h3>
+                      <button type="button" onClick={() => setCancelModal(null)} className="p-1 text-gray-500 hover:text-gray-700 rounded" aria-label="Close">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">
+                      The subscription will be cancelled. Razorpay will be notified if linked.
+                    </p>
+                    <div className="flex gap-2 justify-end">
+                      <button type="button" onClick={() => setCancelModal(null)} className="btn-ghost py-2 px-4 rounded-lg">
+                        Keep
+                      </button>
+                      <button type="button" onClick={handleCancel} disabled={isCancelling} className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50">
+                        {isCancelling ? 'Cancelling…' : 'Cancel subscription'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {statusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="admin-status-title">
+                  <div className="card max-w-md w-full p-6 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 id="admin-status-title" className="font-semibold text-gray-900">Change subscription status</h3>
+                      <button type="button" onClick={() => setStatusModal(null)} className="p-1 text-gray-500 hover:text-gray-700 rounded" aria-label="Close">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3">Current: <span className="font-medium capitalize">{statusModal.current}</span></p>
+                    <div className="flex flex-wrap gap-2">
+                      {STATUS_OPTIONS.filter((s) => s !== statusModal.current).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleStatusChange(s)}
+                          disabled={isUpdating}
+                          className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 capitalize"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">

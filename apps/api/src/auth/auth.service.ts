@@ -61,7 +61,7 @@ export class AuthService {
     }
 
     const baseUrl = user.role === UserRole.DOCTOR
-      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
       : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
     await this.mailService.sendVerificationEmail(user.email, user.firstName, verificationToken, baseUrl);
 
@@ -92,7 +92,7 @@ export class AuthService {
     await this.userRepo.save(user);
 
     const baseUrl = user.role === UserRole.DOCTOR
-      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
       : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
     await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
     return { message: 'Verification email sent' };
@@ -109,7 +109,7 @@ export class AuthService {
       user.emailVerificationToken = newToken;
       await this.userRepo.save(user);
       const baseUrl = user.role === UserRole.DOCTOR
-        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
         : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
       await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
     }
@@ -148,7 +148,7 @@ export class AuthService {
       user.passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       await this.userRepo.save(user);
       const baseUrl = user.role === UserRole.DOCTOR
-        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002')
+        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
         : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
       await this.mailService.sendPasswordResetEmail(user.email, user.firstName, resetToken, baseUrl);
     }

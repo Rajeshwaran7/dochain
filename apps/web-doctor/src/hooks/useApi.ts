@@ -58,6 +58,11 @@ export function useCreateSubscription() {
   return useMutation({ mutationFn: (plan: string) => subscriptionsApi.create(plan).then(r => r.data), onSuccess: () => qc.invalidateQueries({ queryKey: ['my-subscription'] }) });
 }
 
+export function useCancelSubscription() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: (reason?: string) => subscriptionsApi.cancel(reason).then(r => r.data), onSuccess: () => qc.invalidateQueries({ queryKey: ['my-subscription'] }) });
+}
+
 export function useMyReviews(doctorId?: string) {
   return useQuery({ queryKey: ['my-reviews', doctorId], queryFn: () => reviewsApi.getByDoctor(doctorId!).then(r => r.data), enabled: !!doctorId });
 }

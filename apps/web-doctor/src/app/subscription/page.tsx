@@ -1,9 +1,10 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Check, Loader2, CreditCard, AlertCircle } from 'lucide-react';
-import { useSubscriptionPlans, useMySubscription, useCreateSubscription } from '@/hooks/useApi';
+import { ChevronLeft, Check, Loader2, CreditCard, AlertCircle, X } from 'lucide-react';
+import { useSubscriptionPlans, useMySubscription, useCreateSubscription, useCancelSubscription } from '@/hooks/useApi';
 
-declare global { interface Window { Razorpay: any } }
+declare global { interface Window { Razorpay: unknown } }
 
 const PLAN_COLORS: Record<string, string> = {
   free:     'border-gray-200',
@@ -20,6 +21,9 @@ export default function SubscriptionPage() {
   const { data: plans = [], isLoading: plansLoading } = useSubscriptionPlans();
   const { data: currentSub } = useMySubscription();
   const { mutateAsync: createSub, isPending } = useCreateSubscription();
+  const { mutateAsync: cancelSub, isPending: isCancelling } = useCancelSubscription();
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const handleSubscribe = async (plan: string) => {
     if (plan === 'free') {
@@ -43,8 +47,19 @@ export default function SubscriptionPage() {
       },
     };
 
-    const rzp = new window.Razorpay(options);
+    const rzp = new (window as Window & { Razorpay: new (o: Record<string, unknown>) => { open: () => void } }).Razorpay(options);
     rzp.open();
+  };
+
+  const handleCancelClick = () => setShowCancelConfirm(true);
+  const handleCancelConfirm = async () => {
+    await cancelSub(cancelReason || undefined);
+    setShowCancelConfirm(false);
+    setCancelReason('');
+  };
+  const handleCancelClose = () => {
+    setShowCancelConfirm(false);
+    setCancelReason('');
   };
 
   if (plansLoading) return (
@@ -65,17 +80,27 @@ export default function SubscriptionPage() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* Current plan banner */}
         {currentSub && (
-          <div className="card p-4 mb-8 border-violet-200 bg-violet-50 flex items-center gap-3">
+          <div className="card p-4 mb-8 border-violet-200 bg-violet-50 flex flex-wrap items-center gap-3">
             <CreditCard className="w-5 h-5 text-violet-600 shrink-0" />
-            <div>
+            <div className="flex-1 min-w-0">
               <span className="font-semibold text-gray-900 capitalize">{currentSub.plan} Plan</span>
               {' '}
               <span className="text-gray-600 text-sm">— Active subscription</span>
             </div>
             {currentSub.currentPeriodEnd && (
-              <span className="ml-auto text-gray-600 text-sm">
+              <span className="text-gray-600 text-sm">
                 Renews {new Date(currentSub.currentPeriodEnd).toLocaleDateString('en-IN')}
               </span>
+            )}
+            {currentSub.plan !== 'free' && (
+              <button
+                type="button"
+                onClick={handleCancelClick}
+                disabled={isCancelling}
+                className="text-sm text-red-600 hover:text-red-700 hover:underline disabled:opacity-50"
+              >
+                {isCancelling ? 'Cancelling…' : 'Cancel subscription'}
+              </button>
             )}
           </div>
         )}
@@ -148,6 +173,39 @@ export default function SubscriptionPage() {
             New doctors get a free 3-month trial on the Basic plan.
           </p>
         </div>
+
+        {showCancelConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+            <div className="card max-w-md w-full p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 id="cancel-title" className="font-semibold text-gray-900">Cancel subscription?</h3>
+                <button type="button" onClick={handleCancelClose} className="p-1 text-gray-500 hover:text-gray-700 rounded" aria-label="Close">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-gray-600 text-sm mb-4">
+                Your plan will remain active until the end of the current billing period. You can resubscribe anytime.
+              </p>
+              <label htmlFor="cancel-reason" className="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
+              <input
+                id="cancel-reason"
+                type="text"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g. switching plan"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-4"
+              />
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={handleCancelClose} className="btn-ghost py-2 px-4 rounded-lg">
+                  Keep subscription
+                </button>
+                <button type="button" onClick={handleCancelConfirm} disabled={isCancelling} className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  {isCancelling ? 'Cancelling…' : 'Cancel subscription'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

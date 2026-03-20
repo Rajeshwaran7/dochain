@@ -9,10 +9,12 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ['400','500','600','700','800'],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const metadata: Metadata = {
   title: { default: 'Dochain — Doctor Dashboard', template: '%s | Dochain Doctor' },
   description: 'Manage your clinic, appointments and patients on Dochain.',
-  manifest: '/manifest.json',
+  manifest: `${basePath}/manifest.json`,
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Dochain Doctor' },
 };
 
@@ -27,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={jakarta.variable}>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href={`${basePath}/icons/icon-192x192.png`} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-gray-50 text-gray-900 antialiased">

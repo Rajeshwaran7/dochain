@@ -5,6 +5,7 @@ import {
   User, Doctor, Patient, Appointment, Subscription,
   DoctorStatus, AppointmentStatus, SubscriptionStatus,
 } from '@dochain/database';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class AdminService {
@@ -14,6 +15,7 @@ export class AdminService {
     @InjectRepository(Patient) private patientRepo: Repository<Patient>,
     @InjectRepository(Appointment) private appointmentRepo: Repository<Appointment>,
     @InjectRepository(Subscription) private subRepo: Repository<Subscription>,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async getDashboardStats() {
@@ -105,14 +107,26 @@ export class AdminService {
     return { data, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async listSubscriptions(page = 1, limit = 20) {
+  async listSubscriptions(status?: SubscriptionStatus, page = 1, limit = 20) {
+    const where: { status?: SubscriptionStatus } = {};
+    if (status) where.status = status;
+
     const [data, total] = await this.subRepo.findAndCount({
+      where,
       relations: ['doctor', 'doctor.user'],
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
     return { data, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  async cancelSubscription(subscriptionId: string, reason?: string) {
+    return this.subscriptionsService.cancelSubscriptionById(subscriptionId, reason);
+  }
+
+  async updateSubscriptionStatus(subscriptionId: string, status: SubscriptionStatus) {
+    return this.subscriptionsService.updateSubscriptionStatus(subscriptionId, status);
   }
 
   async toggleUserActive(userId: string) {

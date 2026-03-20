@@ -20,21 +20,22 @@ async function seed() {
   await ds.initialize();
   console.log('Connected to database');
 
-  const email = 'admin@dochain.in';
+  const email = process.env.ADMIN_SEED_EMAIL ?? 'admin@dochain.in';
+  const plainPassword = process.env.ADMIN_SEED_PASSWORD ?? 'Admin@123456';
   const existing = await ds.query('SELECT id FROM users WHERE email = $1', [email]);
 
   if (existing.length > 0) {
-    console.log('Admin user already exists, skipping.');
+    console.log(`Admin user already exists (${email}), skipping.`);
   } else {
-    const hashedPassword = await bcrypt.hash('Admin@123456', 12);
+    const hashedPassword = await bcrypt.hash(plainPassword, 12);
     await ds.query(
       `INSERT INTO users (id, email, password, "firstName", "lastName", role, "isActive", "isEmailVerified", provider, "createdAt", "updatedAt")
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true, true, 'local', NOW(), NOW())`,
       [email, hashedPassword, 'Admin', 'Dochain', 'admin'],
     );
     console.log('Admin user created successfully!');
-    console.log('  Email:    admin@dochain.in');
-    console.log('  Password: Admin@123456');
+    console.log(`  Email:    ${email}`);
+    console.log(`  Password: ${plainPassword}`);
   }
 
   await ds.destroy();

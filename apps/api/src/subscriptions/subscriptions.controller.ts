@@ -1,6 +1,7 @@
+import { Request } from 'express';
 import {
   Controller, Get, Post, Body, Headers, RawBodyRequest,
-  UseGuards, Request, Req,
+  UseGuards, Request as NestRequest, Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
@@ -25,7 +26,7 @@ export class SubscriptionsController {
   @Roles(UserRole.DOCTOR)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my current subscription' })
-  async getMySubscription(@Request() req) {
+  async getMySubscription(@NestRequest() req: { user: { id: string } }) {
     return this.subscriptionsService.getMySubscription(req.user.id);
   }
 
@@ -35,7 +36,7 @@ export class SubscriptionsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new subscription' })
   async createSubscription(
-    @Request() req,
+    @NestRequest() req: { user: { id: string } },
     @Body('plan') plan: SubscriptionPlan,
   ) {
     return this.subscriptionsService.createSubscription(req.user.id, plan);
@@ -47,7 +48,7 @@ export class SubscriptionsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel current subscription' })
   async cancelSubscription(
-    @Request() req,
+    @NestRequest() req: { user: { id: string } },
     @Body('reason') reason?: string,
   ) {
     return this.subscriptionsService.cancelSubscription(req.user.id, reason);
@@ -56,9 +57,12 @@ export class SubscriptionsController {
   @Post('webhook')
   @ApiOperation({ summary: 'Razorpay webhook handler' })
   async webhook(
-    @Body() payload: any,
+    @Req() req: RawBodyRequest<Request>,
     @Headers('x-razorpay-signature') signature: string,
   ) {
-    return this.subscriptionsService.handleWebhook(payload, signature);
+    const rawBody = req.rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}));
+    const rawStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody;
+    const payload = (req.body ?? JSON.parse(rawStr)) as Record<string, unknown>;
+    return this.subscriptionsService.handleWebhook(rawBody, payload, signature);
   }
 }

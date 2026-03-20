@@ -37,6 +37,22 @@ export function useSubscriptions(params?: Record<string, unknown>) {
   return useQuery({ queryKey: ['admin-subscriptions', params], queryFn: () => adminApi.listSubscriptions(params).then(r => r.data), enabled: isAuthenticated });
 }
 
+export function useCancelSubscription() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => adminApi.cancelSubscription(id, reason).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-subscriptions'] }),
+  });
+}
+
+export function useUpdateSubscriptionStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => adminApi.updateSubscriptionStatus(id, status).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-subscriptions'] }),
+  });
+}
+
 export function useToggleUser() {
   const qc = useQueryClient();
   return useMutation({

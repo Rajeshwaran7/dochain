@@ -15,6 +15,13 @@
         "production": {}
       }
     },
+    "seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsx src/seed.ts",
+        "cwd": "apps/api"
+      }
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {

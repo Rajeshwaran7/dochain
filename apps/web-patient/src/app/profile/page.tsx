@@ -82,7 +82,7 @@ export default function PatientProfilePage() {
               </div>
               <div>
                 <label className="label">Gender</label>
-                <select {...register('gender')} className="input">
+                <select {...register('gender')} className="select">
                   <option value="">Select…</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -91,7 +91,7 @@ export default function PatientProfilePage() {
               </div>
               <div>
                 <label className="label">Blood Group</label>
-                <select {...register('bloodGroup')} className="input">
+                <select {...register('bloodGroup')} className="select">
                   <option value="">Select…</option>
                   {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b => (
                     <option key={b} value={b}>{b}</option>
