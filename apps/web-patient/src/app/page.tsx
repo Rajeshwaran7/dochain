@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Stethoscope, Calendar, Star, Shield, ArrowRight, MapPin, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
+import { ShowcaseGallery } from '@/components/ShowcaseGallery';
 
 export default function HomePage() {
   const router = useRouter();
@@ -108,9 +109,9 @@ export default function HomePage() {
       <section className="border-y border-gray-200 bg-gray-100/60">
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {[
-            { value: '500+', label: 'Verified Doctors' },
-            { value: '10K+', label: 'Appointments Booked' },
-            { value: '50+', label: 'Cities Covered' },
+            { value: '50+', label: 'Verified Doctors' },
+            { value: '5K+', label: 'Appointments Booked' },
+            { value: '5+', label: 'Cities Covered' },
             { value: '4.8★', label: 'Average Rating' },
           ].map((s) => (
             <div key={s.label}>
@@ -120,6 +121,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Promotional imagery — doctor & patient stories */}
+      <ShowcaseGallery />
 
       {/* Specializations */}
       <section className="max-w-6xl mx-auto px-4 py-20">

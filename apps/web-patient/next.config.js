@@ -32,7 +32,12 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@dochain/ui', '@dochain/utils'],
   images: {
-    domains: ['lh3.googleusercontent.com', 'res.cloudinary.com', 'api.dochain.in'],
+    domains: [
+      'lh3.googleusercontent.com',
+      'res.cloudinary.com',
+      'api.dochain.in',
+      'images.unsplash.com',
+    ],
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1',
