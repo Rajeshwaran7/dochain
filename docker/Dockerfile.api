@@ -34,4 +34,4 @@ USER nestjs
 
 EXPOSE 4000
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/apps/api/src/main.js"]

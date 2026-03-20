@@ -11,7 +11,12 @@
     "test:all": "nx run-many --target=test --all",
     "lint:all": "nx run-many --target=lint --all",
     "db:migrate": "nx run database:migrate",
-    "db:seed": "nx run api:seed"
+    "db:seed": "nx run api:seed",
+    "build:api": "npm run build --workspace=@dochain/api",
+    "start:api:prod": "npm run start --workspace=@dochain/api"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "private": true,
   "devDependencies": {

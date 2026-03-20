@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { postgresSslFromEnv } from './postgres-ssl';
 
 async function check() {
   const ds = new DataSource({
@@ -9,6 +10,7 @@ async function check() {
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'root',
     database: process.env.DB_NAME || 'doc_db',
+    ssl: postgresSslFromEnv(),
   });
 
   await ds.initialize();

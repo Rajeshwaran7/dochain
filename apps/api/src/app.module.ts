@@ -25,6 +25,7 @@ import {
   Review,
   Subscription,
 } from '@dochain/database';
+import { postgresSslFromEnv } from './postgres-ssl';
 
 @Module({
   imports: [
@@ -60,9 +61,7 @@ import {
         ],
         synchronize: config.get('DB_SYNC', 'true') === 'true',
         logging: config.get('DB_LOGGING', 'false') === 'true',
-        ssl: config.get('NODE_ENV') === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+        ssl: postgresSslFromEnv(),
       }),
     }),
     ThrottlerModule.forRoot([

@@ -36,6 +36,19 @@ Run each app as usual. Open:
 - Doctor: `http://localhost:3002/doctor` (not `http://localhost:3002/` alone)
 - Admin: `http://localhost:3003/admin`
 
+## Render (API only)
+
+Use **repository root** as the service root (leave **Root Directory** empty).
+
+| Field | Value |
+|--------|--------|
+| **Build Command** | `npm ci && npm run build:api` |
+| **Start Command** | `npm run start:api:prod` |
+
+Do **not** set Build Command to `npm` alone — that only prints npm’s help and fails the build.
+
+Optional: set **Node version** to 20 in the environment or per [Render’s Node docs](https://render.com/docs/node-version) (e.g. `NODE_VERSION=20`).
+
 ## Troubleshooting
 
 **Invalid hook call / two copies of React** — The repo root `package.json` pins `react` / `react-dom` and uses `overrides` so every workspace resolves the same version. After changing dependencies, run `npm install` from the monorepo root (not inside `apps/*`).

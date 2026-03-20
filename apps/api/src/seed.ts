@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { postgresSslFromEnv } from './postgres-ssl';
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = parseInt(process.env.DB_PORT || '5432', 10);
@@ -15,6 +16,7 @@ async function seed() {
     username: DB_USERNAME,
     password: DB_PASSWORD,
     database: DB_NAME,
+    ssl: postgresSslFromEnv(),
   });
 
   await ds.initialize();
