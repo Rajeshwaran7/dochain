@@ -11,25 +11,34 @@ interface SendMailOptions {
   html: string;
 }
 
-/** Handles all outbound email delivery via SMTP using Handlebars templates. */
+/** Handles outbound email: prefer Resend (HTTPS) on hosts that block SMTP (e.g. Render free tier). */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter: nodemailer.Transporter;
+  private readonly transporter: nodemailer.Transporter | null;
+  private readonly resendApiKey: string | undefined;
   private readonly templateDir: string;
   private readonly appName: string;
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: this.config.get('SMTP_HOST', 'smtp.gmail.com'),
-      port: this.config.get<number>('SMTP_PORT', 587),
-      secure: false,
-      auth: {
-        user: this.config.get('SMTP_USER'),
-        pass: this.config.get('SMTP_PASS'),
-      },
-    });
     this.appName = this.config.get('APP_NAME', 'Dochain');
+    this.resendApiKey = this.config.get<string>('RESEND_API_KEY')?.trim() || undefined;
+    if (this.resendApiKey) {
+      this.transporter = null;
+      this.logger.log('Mail: using Resend API (HTTPS). SMTP is skipped.');
+    } else {
+      this.transporter = nodemailer.createTransport({
+        host: this.config.get('SMTP_HOST', 'smtp.gmail.com'),
+        port: this.config.get<number>('SMTP_PORT', 587),
+        secure: false,
+        auth: {
+          user: this.config.get('SMTP_USER'),
+          pass: this.config.get('SMTP_PASS'),
+        },
+        connectionTimeout: 20_000,
+        greetingTimeout: 20_000,
+      });
+    }
     this.templateDir = this.resolveTemplateDir();
   }
 
@@ -51,9 +60,19 @@ export class MailService {
     return candidates[0];
   }
 
-  /** Sends an email and logs failures without throwing. */
+  /**
+   * Sends via Resend REST API when `RESEND_API_KEY` is set (works on Render free tier; SMTP ports are blocked).
+   * Otherwise uses SMTP. Set `SMTP_FROM` / verified sender in Resend dashboard.
+   */
   async send(options: SendMailOptions): Promise<boolean> {
     try {
+      if (this.resendApiKey) {
+        return this.sendWithResend(options);
+      }
+      if (!this.transporter) {
+        this.logger.error('Mail transporter not configured');
+        return false;
+      }
       await this.transporter.sendMail({
         from: `"${this.appName}" <${this.config.get('SMTP_FROM', 'noreply@dochain.in')}>`,
         to: options.to,
@@ -65,6 +84,29 @@ export class MailService {
       this.logger.error(`Failed to send email to ${options.to}: ${(error as Error).message}`);
       return false;
     }
+  }
+
+  private async sendWithResend(options: SendMailOptions): Promise<boolean> {
+    const fromEmail = this.config.get('SMTP_FROM', 'onboarding@resend.dev');
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${this.appName} <${fromEmail}>`,
+        to: [options.to],
+        subject: options.subject,
+        html: options.html,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      this.logger.error(`Resend failed ${res.status}: ${body}`);
+      return false;
+    }
+    return true;
   }
 
   /**
