@@ -8,6 +8,19 @@ import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+type PatientProfileForm = {
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  medicalHistory?: string;
+  allergies?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+};
+
 export default function PatientProfilePage() {
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const router  = useRouter();
@@ -25,11 +38,11 @@ export default function PatientProfilePage() {
   });
 
   const { mutateAsync: update, isPending } = useMutation({
-    mutationFn: (d: any) => api.put('/patients/me', d).then(r => r.data),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['patient-profile'] }),
+    mutationFn: (d: PatientProfileForm) => api.put('/patients/me', d).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['patient-profile'] }),
   });
 
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset } = useForm<PatientProfileForm>();
 
   useEffect(() => {
     if (profile) reset({
@@ -72,7 +85,7 @@ export default function PatientProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(update)} className="space-y-5">
+        <form onSubmit={handleSubmit((data) => update(data))} className="space-y-5">
           <div className="card p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
             <div className="grid sm:grid-cols-2 gap-4">
