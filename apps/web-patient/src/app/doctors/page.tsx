@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, MapPin, SlidersHorizontal, Star, ChevronRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -63,7 +63,7 @@ function DoctorCard({ doctor }: { doctor: any }) {
   );
 }
 
-export default function DoctorsPage() {
+function DoctorsPageContent() {
   const searchParams = useSearchParams();
 
   const [filters, setFilters] = useState({
@@ -296,5 +296,19 @@ export default function DoctorsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DoctorsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+        </div>
+      }
+    >
+      <DoctorsPageContent />
+    </Suspense>
   );
 }

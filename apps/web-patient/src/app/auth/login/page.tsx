@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -17,7 +17,7 @@ type FormData = z.infer<typeof schema>;
 
 const EMAIL_NOT_VERIFIED_MSG = 'Email not verified.';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [showResend, setShowResend] = useState(false);
@@ -171,5 +171,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }
