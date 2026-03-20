@@ -16,7 +16,7 @@
     "start:api:prod": "npm run start --workspace=@dochain/api"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "private": true,
   "devDependencies": {

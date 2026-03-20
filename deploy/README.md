@@ -42,8 +42,10 @@ Use **repository root** as the service root (leave **Root Directory** empty).
 
 | Field | Value |
 |--------|--------|
-| **Build Command** | `npm ci && npm run build:api` |
+| **Build Command** | `npm ci --include=dev && npm run build:api` |
 | **Start Command** | `npm run start:api:prod` |
+
+Render sets `NODE_ENV=production` during install, so plain `npm ci` **skips devDependencies** — `@nestjs/cli` would be missing and `nest` fails. `--include=dev` forces dev tools to install.
 
 Do **not** set Build Command to `npm` alone — that only prints npm’s help and fails the build.
 
