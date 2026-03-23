@@ -86,11 +86,11 @@ export default function DoctorAppointmentsPage() {
                         </div>
                         <div>
                           <div className="font-semibold text-gray-900">{p.firstName} {p.lastName}</div>
-                          {p.phone && (
+                          {p.phone ? (
                             <div className="text-gray-600 text-xs flex items-center gap-1 mt-0.5">
-                              <Phone className="w-3 h-3" /> {p.phone}
+                              <Phone className="w-3 h-3" /> {String(p.phone)}
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -110,9 +110,9 @@ export default function DoctorAppointmentsPage() {
                         }`}>{appt.status}</span>
                       </div>
                     </div>
-                    {appt.symptoms && (
-                      <p className="text-gray-500 text-xs mt-3 pl-14">Symptoms: {appt.symptoms}</p>
-                    )}
+                    {appt.symptoms ? (
+                      <p className="text-gray-500 text-xs mt-3 pl-14">Symptoms: {String(appt.symptoms)}</p>
+                    ) : null}
                   </div>
 
                   {/* Expanded panel */}

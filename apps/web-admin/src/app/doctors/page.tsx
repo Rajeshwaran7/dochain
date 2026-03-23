@@ -102,19 +102,20 @@ export default function DoctorsPage() {
                             <span className="flex items-center gap-1">
                               <Mail className="w-3 h-3" /> {user.email as string}
                             </span>
-                            {doc.city && (
+                            {doc.city ? (
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {doc.city as string}
+                                <MapPin className="w-3 h-3" /> {String(doc.city)}
                               </span>
-                            )}
-                            {doc.experienceYears && (
+                            ) : null}
+                            {doc.experienceYears != null &&
+                            Number(doc.experienceYears) > 0 ? (
                               <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {doc.experienceYears as number} yrs exp
+                                <Clock className="w-3 h-3" /> {Number(doc.experienceYears)} yrs exp
                               </span>
-                            )}
-                            {clinic && (
-                              <span className="text-gray-600">Clinic: {clinic.name as string}</span>
-                            )}
+                            ) : null}
+                            {clinic ? (
+                              <span className="text-gray-600">Clinic: {String(clinic.name ?? '')}</span>
+                            ) : null}
                           </div>
                         </div>
                       </div>

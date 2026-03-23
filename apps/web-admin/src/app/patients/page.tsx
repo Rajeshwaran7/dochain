@@ -74,9 +74,9 @@ export default function PatientsPage() {
                             <div className="flex items-center gap-1 text-gray-600 text-sm">
                               <Mail className="w-3 h-3" /> {user.email as string}
                             </div>
-                            {user.phone && (
-                              <div className="text-gray-600 text-xs mt-0.5">{user.phone as string}</div>
-                            )}
+                            {user.phone ? (
+                              <div className="text-gray-600 text-xs mt-0.5">{String(user.phone)}</div>
+                            ) : null}
                           </td>
                           <td className="px-5 py-4">
                             {patient.city ? (

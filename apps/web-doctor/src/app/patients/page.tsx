@@ -50,23 +50,23 @@ export default function DoctorPatientsPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5 text-sm">
-                    {u.email && (
+                    {u.email ? (
                       <div className="flex items-center gap-2 text-gray-600">
                         <Mail className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{u.email}</span>
+                        <span className="truncate">{String(u.email)}</span>
                       </div>
-                    )}
-                    {u.phone && (
+                    ) : null}
+                    {u.phone ? (
                       <div className="flex items-center gap-2 text-gray-600">
                         <Phone className="w-3.5 h-3.5 shrink-0" />
-                        {u.phone}
+                        {String(u.phone)}
                       </div>
-                    )}
-                    {patient?.bloodGroup && (
+                    ) : null}
+                    {patient?.bloodGroup ? (
                       <div className="text-gray-600 text-xs">
-                        Blood group: <span className="text-gray-800">{patient.bloodGroup}</span>
+                        Blood group: <span className="text-gray-800">{String(patient.bloodGroup)}</span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );

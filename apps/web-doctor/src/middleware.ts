@@ -66,32 +66,28 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-const DOCTOR_MATCHERS = [
-  '/doctor/dashboard/:path*',
-  '/doctor/appointments/:path*',
-  '/doctor/profile/:path*',
-  '/doctor/settings/:path*',
-  '/doctor/availability/:path*',
-  '/doctor/patients/:path*',
-  '/doctor/reviews/:path*',
-  '/doctor/subscription/:path*',
-  '/doctor/auth/login',
-  '/doctor/auth/register',
-];
-
-const STANDALONE_MATCHERS = [
-  '/dashboard/:path*',
-  '/appointments/:path*',
-  '/profile/:path*',
-  '/settings/:path*',
-  '/availability/:path*',
-  '/patients/:path*',
-  '/reviews/:path*',
-  '/subscription/:path*',
-  '/auth/login',
-  '/auth/register',
-];
-
+/** All paths for `/doctor/*` (nginx) and standalone `/` deploys — must be a static array (no spread) for Next.js. */
 export const config = {
-  matcher: STANDALONE ? STANDALONE_MATCHERS : DOCTOR_MATCHERS,
+  matcher: [
+    '/doctor/dashboard/:path*',
+    '/doctor/appointments/:path*',
+    '/doctor/profile/:path*',
+    '/doctor/settings/:path*',
+    '/doctor/availability/:path*',
+    '/doctor/patients/:path*',
+    '/doctor/reviews/:path*',
+    '/doctor/subscription/:path*',
+    '/doctor/auth/login',
+    '/doctor/auth/register',
+    '/dashboard/:path*',
+    '/appointments/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
+    '/availability/:path*',
+    '/patients/:path*',
+    '/reviews/:path*',
+    '/subscription/:path*',
+    '/auth/login',
+    '/auth/register',
+  ],
 };
