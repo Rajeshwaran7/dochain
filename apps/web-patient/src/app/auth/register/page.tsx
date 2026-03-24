@@ -28,7 +28,6 @@ export default function RegisterPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
-  const setAuth = useAuthStore((s) => s.setAuth);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const router  = useRouter();
@@ -40,9 +39,9 @@ export default function RegisterPage() {
   const onSubmit = async ({ confirm, ...data }: FormData) => {
     setError('');
     try {
-      const res = await authApi.register({ ...data, role: 'patient' });
-      setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
-      router.push('/dashboard');
+      await authApi.register({ ...data, role: 'patient' });
+      useAuthStore.getState().clearAuth();
+      router.replace(`/auth/check-email?email=${encodeURIComponent(data.email)}`);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Registration failed. Please try again.');
     }

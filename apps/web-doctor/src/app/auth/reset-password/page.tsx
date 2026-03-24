@@ -136,8 +136,13 @@ function ResetPasswordContent() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full btn-primary py-2.5 rounded-xl font-medium flex items-center justify-center gap-2"
+            disabled={
+              loading ||
+              password.length < 8 ||
+              password !== confirmPassword ||
+              !password.trim()
+            }
+            className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-medium btn-primary"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Reset Password

@@ -38,7 +38,14 @@ api.interceptors.response.use(
       } catch {
         const { useAuthStore } = await import('@/store/auth.store');
         useAuthStore.getState().clearAuth();
-        window.location.href = '/auth/login';
+        if (typeof window !== 'undefined') {
+          const p = window.location.pathname;
+          const onPublicAuth =
+            /\/auth\/(check-email|verify-email|login|register|forgot-password|reset-password|callback)/.test(p);
+          if (!onPublicAuth) {
+            window.location.href = '/auth/login';
+          }
+        }
       }
     }
     return Promise.reject(err);
@@ -90,6 +97,26 @@ export const reviewsApi = {
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 export const subscriptionsApi = {
   getPlans: () => api.get('/subscriptions/plans'),
+};
+
+export const medicalRecordsApi = {
+  getMine: () => api.get('/medical-records/me'),
+};
+
+export const prescriptionsApi = {
+  getMine: () => api.get('/prescriptions/me'),
+  getById: (id: string) => api.get(`/prescriptions/${id}`),
+  downloadPdf: (id: string) => api.get(`/prescriptions/${id}/download`, { responseType: 'blob' }),
+};
+
+export const chatApi = {
+  listConversations: () => api.get('/chat/conversations'),
+  open: (data: { patientId?: string; doctorId?: string; appointmentId?: string }) =>
+    api.post('/chat/conversations/open', data),
+  getMessages: (conversationId: string) => api.get(`/chat/conversations/${conversationId}/messages`),
+  sendMessage: (conversationId: string, body: { body: string }) =>
+    api.post(`/chat/conversations/${conversationId}/messages`, body),
+  markRead: (conversationId: string) => api.post(`/chat/conversations/${conversationId}/read`),
 };
 
 export default api;

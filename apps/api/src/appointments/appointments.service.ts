@@ -3,10 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   Appointment,
@@ -18,8 +19,14 @@ import {
 } from '@dochain/database';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CreateAppointmentDto, RescheduleAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { DoctorSlotDto } from './dto/doctor-slot.dto';
+import {
+  DoctorPatientsOrder,
+  DoctorPatientsQueryDto,
+  DoctorPatientsSortBy,
+} from './dto/doctor-patients-query.dto';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -42,55 +49,89 @@ export class AppointmentsService {
     });
   }
 
-  /** Books an appointment and creates a Razorpay order for payment. */
+  /**
+   * Books a slot using a DB transaction and advisory lock to prevent double booking.
+   * Optional `idempotencyKey` returns the same appointment for retries.
+   */
   async create(userId: string, dto: CreateAppointmentDto) {
     const patient = await this.patientRepo.findOne({ where: { userId } });
     if (!patient) throw new NotFoundException('Patient profile not found');
 
-    const doctor = await this.doctorRepo.findOne({ where: { id: dto.doctorId } });
-    if (!doctor) throw new NotFoundException('Doctor not found');
+    const savedId = await this.appointmentRepo.manager.transaction(async (em) => {
+      const lockKey = `${dto.doctorId}|${dto.appointmentDate}|${dto.startTime}`;
+      await em.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [lockKey]);
 
-    const existing = await this.appointmentRepo
-      .createQueryBuilder('a')
-      .where('a.doctorId = :doctorId', { doctorId: dto.doctorId })
-      .andWhere('a.appointmentDate = :date', { date: dto.appointmentDate })
-      .andWhere('a.startTime = :startTime', { startTime: dto.startTime })
-      .andWhere('a.status IN (:...statuses)', {
-        statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
-      })
-      .getOne();
-    if (existing) throw new BadRequestException('This slot is already booked');
+      if (dto.idempotencyKey) {
+        const byKey = await em.findOne(Appointment, { where: { idempotencyKey: dto.idempotencyKey } });
+        if (byKey) {
+          if (byKey.patientId !== patient.id) {
+            throw new ForbiddenException('Invalid idempotency key');
+          }
+          return byKey.id;
+        }
+      }
 
-    const fee = doctor.consultationFee ?? 0;
+      const duplicate = await em
+        .createQueryBuilder(Appointment, 'a')
+        .where('a.doctorId = :doctorId', { doctorId: dto.doctorId })
+        .andWhere('a.appointmentDate = :date', { date: dto.appointmentDate })
+        .andWhere('a.startTime = :startTime', { startTime: dto.startTime })
+        .andWhere('a.status IN (:...statuses)', {
+          statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+        })
+        .getOne();
 
-    const appointment = this.appointmentRepo.create({
-      ...dto,
-      patientId: patient.id,
-      fee,
-      status: AppointmentStatus.PENDING,
+      if (duplicate) {
+        throw new ConflictException('This slot is already booked');
+      }
+
+      const doctor = await em.findOne(Doctor, { where: { id: dto.doctorId } });
+      if (!doctor) throw new NotFoundException('Doctor not found');
+
+      const fee = doctor.consultationFee ?? 0;
+      const appointment = em.create(Appointment, {
+        ...dto,
+        patientId: patient.id,
+        fee,
+        status: AppointmentStatus.PENDING,
+        idempotencyKey: dto.idempotencyKey ?? null,
+      });
+      const saved = await em.save(appointment);
+      return saved.id;
     });
-    const saved = await this.appointmentRepo.save(appointment);
 
+    const withRelations = await this.appointmentRepo.findOne({
+      where: { id: savedId },
+      relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
+    });
+    if (!withRelations) throw new NotFoundException('Appointment not found');
+
+    return this.finalizeNewBooking(withRelations);
+  }
+
+  /**
+   * Creates Razorpay order when applicable and sends confirmation emails.
+   */
+  private async finalizeNewBooking(appointment: Appointment) {
+    const fee = Number(appointment.fee ?? 0);
     const razorpayKeyId = this.configService.get('RAZORPAY_KEY_ID', '');
-    const isRazorpayConfigured = razorpayKeyId && !razorpayKeyId.includes('your_key');
+    const isRazorpayConfigured = Boolean(razorpayKeyId && !razorpayKeyId.includes('your_key'));
 
     if (fee > 0 && isRazorpayConfigured) {
       try {
         const order = await this.razorpay.orders.create({
           amount: Math.round(fee * 100),
           currency: 'INR',
-          receipt: saved.id,
-          notes: { appointmentId: saved.id, doctorId: dto.doctorId },
+          receipt: appointment.id,
+          notes: { appointmentId: appointment.id, doctorId: appointment.doctorId },
         });
 
-        const withRelations = await this.appointmentRepo.findOne({
-          where: { id: saved.id },
-          relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
-        });
-        if (withRelations) this.sendBookingEmails(withRelations);
+        void this.sendBookingEmails(appointment).catch((err) =>
+          this.logger.warn(`Booking emails failed: ${(err as Error).message}`),
+        );
 
         return {
-          appointment: saved,
+          appointment,
           razorpayOrderId: order.id,
           razorpayKeyId,
           amount: Math.round(fee * 100),
@@ -100,14 +141,75 @@ export class AppointmentsService {
       }
     }
 
-    saved.isPaid = fee === 0;
-    await this.appointmentRepo.save(saved);
-    const withRelations = await this.appointmentRepo.findOne({
-      where: { id: saved.id },
+    appointment.isPaid = fee === 0;
+    await this.appointmentRepo.save(appointment);
+    void this.sendBookingEmails(appointment).catch((err) =>
+      this.logger.warn(`Booking emails failed: ${(err as Error).message}`),
+    );
+    return { appointment };
+  }
+
+  /**
+   * Moves a booking to a new slot; uses the same lock and duplicate checks as create.
+   */
+  async reschedule(
+    id: string,
+    userId: string,
+    role: UserRole,
+    dto: RescheduleAppointmentDto,
+  ) {
+    const appointment = await this.appointmentRepo.findOne({ where: { id } });
+    if (!appointment) throw new NotFoundException('Appointment not found');
+
+    const doctor = await this.doctorRepo.findOne({ where: { userId } });
+    const patient = await this.patientRepo.findOne({ where: { userId } });
+
+    if (role === UserRole.DOCTOR && doctor?.id !== appointment.doctorId) {
+      throw new ForbiddenException();
+    }
+    if (role === UserRole.PATIENT && patient?.id !== appointment.patientId) {
+      throw new ForbiddenException();
+    }
+
+    if (
+      appointment.status === AppointmentStatus.CANCELLED ||
+      appointment.status === AppointmentStatus.COMPLETED
+    ) {
+      throw new BadRequestException('Cannot reschedule this appointment');
+    }
+
+    const doctorId = appointment.doctorId;
+
+    await this.appointmentRepo.manager.transaction(async (em) => {
+      const lockKey = `${doctorId}|${dto.appointmentDate}|${dto.startTime}`;
+      await em.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [lockKey]);
+
+      const duplicate = await em
+        .createQueryBuilder(Appointment, 'a')
+        .where('a.doctorId = :doctorId', { doctorId })
+        .andWhere('a.appointmentDate = :date', { date: dto.appointmentDate })
+        .andWhere('a.startTime = :startTime', { startTime: dto.startTime })
+        .andWhere('a.status IN (:...statuses)', {
+          statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+        })
+        .andWhere('a.id != :id', { id })
+        .getOne();
+
+      if (duplicate) {
+        throw new ConflictException('This slot is already booked');
+      }
+
+      await em.getRepository(Appointment).update(id, {
+        appointmentDate: dto.appointmentDate as any,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+      });
+    });
+
+    return this.appointmentRepo.findOne({
+      where: { id },
       relations: ['doctor', 'doctor.user', 'patient', 'patient.user'],
     });
-    if (withRelations) this.sendBookingEmails(withRelations);
-    return { appointment: saved };
   }
 
   /** Sends booking confirmation to patient and new-request notification to doctor. */
@@ -184,6 +286,121 @@ export class AppointmentsService {
       relations: ['patient', 'patient.user'],
       order: { appointmentDate: 'ASC', startTime: 'ASC' },
     });
+  }
+
+  private applyDoctorPatientFilters(
+    qb: SelectQueryBuilder<Appointment>,
+    doctorId: string,
+    dto: DoctorPatientsQueryDto,
+  ): void {
+    qb.innerJoin('a.patient', 'patient')
+      .innerJoin('patient.user', 'user')
+      .where('a.doctorId = :doctorId', { doctorId })
+      .andWhere('a.status = :status', { status: AppointmentStatus.COMPLETED });
+
+    if (dto.dateFrom) {
+      qb.andWhere('a.appointmentDate >= :dateFrom', { dateFrom: dto.dateFrom });
+    }
+    if (dto.dateTo) {
+      qb.andWhere('a.appointmentDate <= :dateTo', { dateTo: dto.dateTo });
+    }
+
+    const q = dto.q?.trim();
+    if (q) {
+      const like = `%${q.toLowerCase()}%`;
+      qb.andWhere(
+        new Brackets((w) => {
+          w.where('LOWER(CONCAT(user.firstName, \' \', user.lastName)) LIKE :like', { like })
+            .orWhere('LOWER(user.email) LIKE :like', { like })
+            .orWhere('LOWER(COALESCE(user.phone, \'\')) LIKE :like', { like });
+        }),
+      );
+    }
+  }
+
+  /**
+   * Paginated patients with completed visits (search, date range, sort, and pagination in the database).
+   */
+  async getDoctorPatients(userId: string, dto: DoctorPatientsQueryDto) {
+    const doctor = await this.doctorRepo.findOne({ where: { userId } });
+    if (!doctor) throw new NotFoundException('Doctor not found');
+
+    if (dto.dateFrom && dto.dateTo && dto.dateFrom > dto.dateTo) {
+      throw new BadRequestException('dateFrom must be before or equal to dateTo');
+    }
+
+    const page = dto.page ?? 1;
+    const limit = Math.min(dto.limit ?? 8, 50);
+
+    const countQb = this.appointmentRepo.createQueryBuilder('a');
+    this.applyDoctorPatientFilters(countQb, doctor.id, dto);
+    const countRow = await countQb.select('COUNT(DISTINCT a.patientId)', 'cnt').getRawOne();
+    const total = parseInt(String(countRow?.cnt ?? 0), 10);
+
+    const listQb = this.appointmentRepo.createQueryBuilder('a');
+    this.applyDoctorPatientFilters(listQb, doctor.id, dto);
+    listQb
+      .select('a.patientId', 'patientId')
+      .addSelect('MAX(a.appointmentDate)', 'lastVisitDate')
+      .addSelect('COUNT(*)', 'visitCount')
+      .groupBy('a.patientId');
+
+    const sortBy = dto.sortBy ?? DoctorPatientsSortBy.LAST_VISIT;
+    const order = dto.order ?? DoctorPatientsOrder.DESC;
+
+    if (sortBy === DoctorPatientsSortBy.NAME) {
+      const dir = order === DoctorPatientsOrder.ASC ? 'ASC' : 'DESC';
+      listQb.orderBy('MIN(user.firstName)', dir).addOrderBy('MIN(user.lastName)', dir);
+    } else {
+      const dir = order === DoctorPatientsOrder.ASC ? 'ASC' : 'DESC';
+      listQb.orderBy('MAX(a.appointmentDate)', dir);
+    }
+
+    listQb.skip((page - 1) * limit).take(limit);
+
+    const raw = await listQb.getRawMany();
+
+    if (raw.length === 0) {
+      return {
+        items: [],
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 0,
+      };
+    }
+
+    const ids = raw.map((r) => String(r.patientId));
+    const patients = await this.patientRepo.find({
+      where: { id: In(ids) },
+      relations: ['user'],
+    });
+    const byId = new Map(patients.map((p) => [p.id, p]));
+
+    const items = raw.map((row) => {
+      const pid = String(row.patientId);
+      const p = byId.get(pid);
+      const lastVisit = row.lastVisitDate as Date | string;
+      const lastVisitDate =
+        lastVisit instanceof Date
+          ? lastVisit.toISOString().split('T')[0]
+          : String(lastVisit).split('T')[0];
+      const visitCount = parseInt(String(row.visitCount), 10);
+      return {
+        patientId: pid,
+        lastVisitDate,
+        visitCount: Number.isFinite(visitCount) ? visitCount : 0,
+        patient: p ?? null,
+      };
+    });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 0,
+    };
   }
 
   async updateStatus(
@@ -278,8 +495,11 @@ export class AppointmentsService {
     return appt;
   }
 
-  /** Generates available time slots for a doctor on a given date, respecting exceptions. */
-  async getAvailableSlots(doctorId: string, date: string): Promise<string[]> {
+  /**
+   * Lists every slot in the doctor's schedule for the date with UI status (available / booked / completed / past).
+   * Normalizes DB times (e.g. 09:00:00) to HH:mm so booked slots match generated keys.
+   */
+  async getAvailableSlots(doctorId: string, date: string): Promise<DoctorSlotDto[]> {
     const doctor = await this.doctorRepo.findOne({
       where: { id: doctorId },
       relations: ['availabilities'],
@@ -300,7 +520,7 @@ export class AppointmentsService {
       startTime = exception.customStartTime;
       endTime = exception.customEndTime;
       const d = new Date(date);
-      const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const dayOfWeek = dayNames[d.getDay()];
       const availability = doctor.availabilities?.find(
         (a) => a.dayOfWeek === dayOfWeek && a.isActive,
@@ -308,7 +528,7 @@ export class AppointmentsService {
       duration = availability?.slotDurationMinutes ?? 15;
     } else {
       const d = new Date(date);
-      const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const dayOfWeek = dayNames[d.getDay()];
       const availability = doctor.availabilities?.find(
         (a) => a.dayOfWeek === dayOfWeek && a.isActive,
@@ -319,41 +539,77 @@ export class AppointmentsService {
       duration = availability.slotDurationMinutes;
     }
 
-    const bookedSlots = await this.appointmentRepo
-      .createQueryBuilder('a')
-      .select('a.startTime')
-      .where('a.doctorId = :doctorId', { doctorId })
-      .andWhere('a.appointmentDate = :date', { date })
-      .andWhere('a.status IN (:...statuses)', {
-        statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
-      })
-      .getMany();
+    const slotTimes = this.enumerateSlotTimes(startTime, endTime, duration);
 
-    const booked = new Set(bookedSlots.map((a) => a.startTime));
-    return this.generateTimeSlots(startTime, endTime, duration, booked);
+    const dayAppointments = await this.appointmentRepo.find({
+      where: { doctorId, appointmentDate: date as any },
+      select: ['startTime', 'status'],
+    });
+
+    const statusBySlot = new Map<string, AppointmentStatus>();
+    for (const a of dayAppointments) {
+      const key = AppointmentsService.normalizeSlotTime(a.startTime);
+      const merged = AppointmentsService.mergeAppointmentStatus(statusBySlot.get(key), a.status);
+      statusBySlot.set(key, merged);
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isToday = date === todayStr;
+
+    return slotTimes.map((time): DoctorSlotDto => {
+      if (isToday && AppointmentsService.isSlotInPast(date, time)) {
+        return { time, status: 'past' };
+      }
+      const apptStatus = statusBySlot.get(time);
+      if (apptStatus === AppointmentStatus.PENDING || apptStatus === AppointmentStatus.CONFIRMED) {
+        return { time, status: 'booked' };
+      }
+      if (apptStatus === AppointmentStatus.COMPLETED || apptStatus === AppointmentStatus.NO_SHOW) {
+        return { time, status: 'completed' };
+      }
+      return { time, status: 'available' };
+    });
   }
 
-  private generateTimeSlots(
-    startTime: string,
-    endTime: string,
-    durationMinutes: number,
-    booked: Set<string>,
-  ): string[] {
+  private static normalizeSlotTime(raw: string): string {
+    const parts = raw.split(':');
+    const h = (parts[0] ?? '0').padStart(2, '0');
+    const m = (parts[1] ?? '0').padStart(2, '0');
+    return `${h}:${m}`;
+  }
+
+  private static mergeAppointmentStatus(
+    existing: AppointmentStatus | undefined,
+    next: AppointmentStatus,
+  ): AppointmentStatus {
+    if (!existing) return next;
+    const rank = (s: AppointmentStatus) => {
+      if (s === AppointmentStatus.PENDING || s === AppointmentStatus.CONFIRMED) return 3;
+      if (s === AppointmentStatus.COMPLETED || s === AppointmentStatus.NO_SHOW) return 2;
+      return 0;
+    };
+    return rank(next) > rank(existing) ? next : existing;
+  }
+
+  private static isSlotInPast(dateStr: string, timeStr: string): boolean {
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const [h, mi] = timeStr.split(':').map(Number);
+    const slotStart = new Date(y, mo - 1, d, h, mi, 0, 0);
+    return slotStart.getTime() < Date.now();
+  }
+
+  private enumerateSlotTimes(startTime: string, endTime: string, durationMinutes: number): string[] {
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
-
     const slots: string[] = [];
     let current = startH * 60 + startM;
     const end = endH * 60 + endM;
-
     while (current + durationMinutes <= end) {
       const h = Math.floor(current / 60).toString().padStart(2, '0');
       const m = (current % 60).toString().padStart(2, '0');
-      const slotTime = `${h}:${m}`;
-      if (!booked.has(slotTime)) slots.push(slotTime);
+      slots.push(`${h}:${m}`);
       current += durationMinutes;
     }
-
     return slots;
   }
 
@@ -407,7 +663,15 @@ export class AppointmentsService {
       where: { doctorId: doctor.id, status: AppointmentStatus.PENDING },
     });
 
-    return { total, todayCount, completed, pending };
+    const patientRow = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .select('COUNT(DISTINCT a.patientId)', 'cnt')
+      .where('a.doctorId = :doctorId', { doctorId: doctor.id })
+      .andWhere('a.status = :status', { status: AppointmentStatus.COMPLETED })
+      .getRawOne();
+    const totalPatients = parseInt(String(patientRow?.cnt ?? 0), 10);
+
+    return { total, totalPatients, todayCount, completed, pending };
   }
 
   /** Returns appointment counts grouped by month for the last 6 months. */

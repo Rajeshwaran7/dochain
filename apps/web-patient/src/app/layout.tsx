@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: { default: 'Dochain – Find & Book Doctors', template: '%s | Dochain' },
   description: 'Discover and book appointments with top doctors near you instantly.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: '/icons/icon-192x192.png',
+  },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Dochain' },
   formatDetection: { telephone: false },
   openGraph: {

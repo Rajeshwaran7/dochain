@@ -14,6 +14,10 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { MedicalRecordsModule } from './medical-records/medical-records.module';
+import { PrescriptionsModule } from './prescriptions/prescriptions.module';
+import { ChatModule } from './chat/chat.module';
 import {
   User,
   Doctor,
@@ -24,6 +28,11 @@ import {
   AvailabilityException,
   Review,
   Subscription,
+  MedicalRecordEntry,
+  MedicalAttachment,
+  Prescription,
+  Conversation,
+  Message,
 } from '@dochain/database';
 import { postgresSslFromEnv } from './postgres-ssl';
 
@@ -58,6 +67,11 @@ import { postgresSslFromEnv } from './postgres-ssl';
           AvailabilityException,
           Review,
           Subscription,
+          MedicalRecordEntry,
+          MedicalAttachment,
+          Prescription,
+          Conversation,
+          Message,
         ],
         synchronize: config.get('DB_SYNC', 'true') === 'true',
         logging: config.get('DB_LOGGING', 'false') === 'true',
@@ -72,6 +86,10 @@ import { postgresSslFromEnv } from './postgres-ssl';
     ]),
     ScheduleModule.forRoot(),
     MailModule,
+    CloudinaryModule,
+    MedicalRecordsModule,
+    PrescriptionsModule,
+    ChatModule,
     AuthModule,
     DoctorsModule,
     PatientsModule,

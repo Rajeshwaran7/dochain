@@ -1,15 +1,22 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Star, MapPin, Calendar, Clock, Award, Languages,
-  ChevronLeft, Loader2,
+  ChevronLeft, Loader2, MessageSquare,
 } from 'lucide-react';
-import { useDoctor, useAvailableSlots, useDoctorReviews, useBookAppointment } from '@/hooks/useApi';
+import {
+  useDoctor,
+  useAvailableSlots,
+  useDoctorReviews,
+  useBookAppointment,
+  useOpenPatientConversation,
+} from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth.store';
 import { formatCurrency, formatTime, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 declare global { interface Window { Razorpay: unknown } }
 
@@ -27,6 +34,30 @@ function getNext7Days() {
   });
 }
 
+function doctorSlotTitle(slot: DoctorSlotOption): string {
+  if (slot.status === 'booked') return 'Already booked';
+  if (slot.status === 'completed') return 'Visit completed';
+  if (slot.status === 'past') return 'Past time';
+  return 'Book this slot';
+}
+
+function doctorSlotButtonClass(slot: DoctorSlotOption, selected: boolean): string {
+  const base = 'rounded-lg py-1.5 text-xs transition-all w-full';
+  if (slot.status === 'available') {
+    if (selected) {
+      return `${base} bg-cyan-600 text-white font-semibold ring-2 ring-cyan-200`;
+    }
+    return `${base} bg-gray-100 text-gray-800 hover:bg-gray-200`;
+  }
+  if (slot.status === 'booked') {
+    return `${base} cursor-not-allowed bg-amber-50 text-amber-800/70 line-through decoration-amber-700/40`;
+  }
+  if (slot.status === 'completed') {
+    return `${base} cursor-not-allowed bg-gray-200 text-gray-500`;
+  }
+  return `${base} cursor-not-allowed bg-slate-100 text-slate-400`;
+}
+
 export default function DoctorProfilePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -38,7 +69,26 @@ export default function DoctorProfilePage() {
   const { data: slots = [] } = useAvailableSlots(id, selectedDate);
   const { data: reviewsData } = useDoctorReviews(id);
   const { mutateAsync: bookAppt, isPending } = useBookAppointment();
+  const { mutateAsync: openChat, isPending: chatPending } = useOpenPatientConversation();
   const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    const row = slots.find((s) => s.time === selectedSlot);
+    if (selectedSlot && row && row.status !== 'available') {
+      setSelectedSlot('');
+    }
+  }, [slots, selectedSlot]);
+
+  const selectedSlotOk = slots.find((s) => s.time === selectedSlot)?.status === 'available';
+
+  const handleMessageDoctor = async () => {
+    try {
+      const conv = await openChat({ doctorId: id });
+      router.push(`/messages/${conv.id}`);
+    } catch {
+      toast.error('You can message this doctor after you have an appointment together.');
+    }
+  };
 
   const days = getNext7Days();
 
@@ -48,9 +98,14 @@ export default function DoctorProfilePage() {
       const [startH, startM] = selectedSlot.split(':').map(Number);
       const endMin = startH * 60 + startM + 30;
       const endTime = `${Math.floor(endMin / 60).toString().padStart(2,'0')}:${(endMin % 60).toString().padStart(2,'0')}`;
+      const idempotencyKey = crypto.randomUUID();
       const result = await bookAppt({
-        doctorId: id, appointmentDate: selectedDate,
-        startTime: selectedSlot, endTime, symptoms,
+        doctorId: id,
+        appointmentDate: selectedDate,
+        startTime: selectedSlot,
+        endTime,
+        symptoms,
+        idempotencyKey,
       });
 
       if (result.razorpayOrderId) {
@@ -69,9 +124,12 @@ export default function DoctorProfilePage() {
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpaySignature: response.razorpay_signature,
               });
+              toast.success('Payment verified. Your appointment is booked.');
               router.push('/dashboard');
             } catch {
-              alert('Payment was received but verification failed. Please contact support with your payment ID: ' + response.razorpay_payment_id);
+              toast.error(
+                `Payment received but verification failed. Save this ID for support: ${response.razorpay_payment_id}`,
+              );
             }
           },
           theme: { color: '#06b6d4' },
@@ -79,11 +137,12 @@ export default function DoctorProfilePage() {
         const rzp = new (window as { Razorpay: new (opts: unknown) => { open: () => void } }).Razorpay(options);
         rzp.open();
       } else {
+        toast.success('Appointment booked.');
         router.push('/dashboard');
       }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
-      alert(err?.response?.data?.message ?? 'Booking failed');
+      toast.error(err?.response?.data?.message ?? 'Booking failed');
     }
   };
 
@@ -102,6 +161,8 @@ export default function DoctorProfilePage() {
   const user = doctor.user || {};
   const clinic = doctor.clinic;
   const reviews = reviewsData?.data || [];
+  const profilePhoto =
+    (doctor as { profileImage?: string | null }).profileImage ?? (user as { avatar?: string }).avatar;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
@@ -122,8 +183,8 @@ export default function DoctorProfilePage() {
             {/* Header card */}
             <div className="card p-6 flex gap-5">
               <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-                {user.avatar
-                  ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                {profilePhoto
+                  ? <img src={profilePhoto} alt="" className="w-full h-full object-cover" />
                   : <span className="font-display font-bold text-2xl text-cyan-600">
                       {user.firstName?.[0]}{user.lastName?.[0]}
                     </span>
@@ -155,6 +216,24 @@ export default function DoctorProfilePage() {
                     </span>
                   )}
                 </div>
+                {isAuthenticated ? (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={handleMessageDoctor}
+                      disabled={chatPending}
+                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 hover:bg-cyan-100 disabled:opacity-60"
+                    >
+                      {chatPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <MessageSquare className="h-4 w-4" aria-hidden />
+                      )}
+                      Message doctor
+                    </button>
+                    <p className="mt-1 text-xs text-gray-500">Requires an existing appointment.</p>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -270,25 +349,31 @@ export default function DoctorProfilePage() {
 
                   {/* Slot picker */}
                   <div className="mb-4">
-                    <label className="label text-xs">Available slots</label>
+                    <label className="label text-xs">Slots for this day</label>
                     {slots.length === 0 ? (
-                      <p className="text-gray-600 text-sm py-2">No slots available on this day.</p>
+                      <p className="text-gray-600 text-sm py-2">No schedule on this day.</p>
                     ) : (
-                      <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto">
-                        {slots.map((slot: string) => (
-                          <button
-                            key={slot}
-                            onClick={() => setSelectedSlot(slot)}
-                            className={`rounded-lg py-1.5 text-xs transition-all ${
-                              selectedSlot === slot
-                                ? 'bg-cyan-600 text-white font-semibold'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {formatTime(slot)}
-                          </button>
-                        ))}
-                      </div>
+                      <>
+                        <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto">
+                          {slots.map((slot) => (
+                            <button
+                              key={slot.time}
+                              type="button"
+                              title={doctorSlotTitle(slot)}
+                              disabled={slot.status !== 'available'}
+                              onClick={() => {
+                                if (slot.status === 'available') setSelectedSlot(slot.time);
+                              }}
+                              className={doctorSlotButtonClass(slot, selectedSlot === slot.time)}
+                            >
+                              {formatTime(slot.time)}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-[10px] leading-snug text-gray-500">
+                          Booked, completed, and past times are greyed out and cannot be selected.
+                        </p>
+                      </>
                     )}
                   </div>
 
@@ -307,7 +392,7 @@ export default function DoctorProfilePage() {
                   {isAuthenticated ? (
                     <button
                       onClick={handleBook}
-                      disabled={!selectedSlot || isPending}
+                      disabled={!selectedSlotOk || isPending}
                       className="btn-primary w-full flex items-center justify-center gap-2"
                     >
                       {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}

@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: { default: 'Dochain — Doctor Dashboard', template: '%s | Dochain Doctor' },
   description: 'Manage your clinic, appointments and patients on Dochain.',
   manifest: `${basePath}/manifest.json`,
+  icons: {
+    icon: [{ url: `${basePath}/icon.svg`, type: 'image/svg+xml' }],
+    apple: `${basePath}/icons/icon-192x192.png`,
+  },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Dochain Doctor' },
 };
 
@@ -22,7 +26,7 @@ export const viewport: Viewport = {
   themeColor: '#7c3aed',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="apple-touch-icon" href={`${basePath}/icons/icon-192x192.png`} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-gray-50 text-gray-900 antialiased">
         <Providers>{children}</Providers>

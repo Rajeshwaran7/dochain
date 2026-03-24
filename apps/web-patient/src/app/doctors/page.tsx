@@ -9,14 +9,15 @@ import { debounce } from '@/lib/utils';
 function DoctorCard({ doctor }: { doctor: any }) {
   const doc = doctor;
   const user = doc.user || {};
+  const profilePhoto = doc.profileImage ?? user.avatar;
   return (
     <Link
       href={`/doctors/${doc.id}`}
       className="card-hover p-4 sm:p-5 flex gap-3 sm:gap-4 group min-w-0 overflow-hidden"
     >
       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-        {user.avatar
-          ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+        {profilePhoto
+          ? <img src={profilePhoto} alt="" className="w-full h-full object-cover" />
           : <span className="font-display font-bold text-lg sm:text-xl text-cyan-600">
               {user.firstName?.[0]}{user.lastName?.[0]}
             </span>

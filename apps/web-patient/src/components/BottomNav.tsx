@@ -1,13 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Calendar, User } from 'lucide-react';
+import { Home, Search, Calendar, HeartPulse, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Home', href: '/dashboard' },
   { icon: Search, label: 'Doctors', href: '/doctors' },
   { icon: Calendar, label: 'Bookings', href: '/appointments' },
+  /** Default tab=records; use tab=messages when returning from chat. */
+  { icon: HeartPulse, label: 'Health', href: '/health' },
   { icon: User, label: 'Profile', href: '/profile' },
 ];
 
@@ -26,7 +28,10 @@ export default function BottomNav() {
       <div className="flex items-center justify-around h-16 px-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive =
+            item.href === '/health'
+              ? pathname === '/health' || pathname.startsWith('/messages')
+              : pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}

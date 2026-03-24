@@ -71,6 +71,10 @@ export class Doctor {
   @Column({ nullable: true })
   profileImage: string;
 
+  /** Cloudinary `public_id` for deleting/replacing the profile image. */
+  @Column({ nullable: true })
+  profileImagePublicId: string;
+
   @Column({ type: 'enum', enum: DoctorStatus, default: DoctorStatus.PENDING })
   status: DoctorStatus;
 

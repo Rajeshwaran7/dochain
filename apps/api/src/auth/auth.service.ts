@@ -30,6 +30,31 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
+  /**
+   * Public base URL for doctor web links (email verification, password reset).
+   * Next.js doctor app uses `basePath: /doctor`; if `DOCTOR_APP_URL` is only origin:port, `/doctor` is appended unless `DOCTOR_APP_STANDALONE_DEPLOY` is true.
+   */
+  private doctorAppPublicBase(): string {
+    const raw = this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor').trim();
+    const standalone = this.configService.get('DOCTOR_APP_STANDALONE_DEPLOY') === 'true';
+    if (standalone) {
+      return raw.replace(/\/$/, '');
+    }
+    const s = raw.replace(/\/$/, '');
+    if (s.endsWith('/doctor')) {
+      return s;
+    }
+    try {
+      const u = new URL(s);
+      if (!u.pathname || u.pathname === '/') {
+        return `${s}/doctor`;
+      }
+    } catch {
+      return raw;
+    }
+    return s;
+  }
+
   async register(dto: RegisterDto) {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already registered');
@@ -60,13 +85,17 @@ export class AuthService {
       await this.doctorRepo.save(doctor);
     }
 
-    const baseUrl = user.role === UserRole.DOCTOR
-      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
-      : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+    const baseUrl =
+      user.role === UserRole.DOCTOR
+        ? this.doctorAppPublicBase()
+        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
     await this.mailService.sendVerificationEmail(user.email, user.firstName, verificationToken, baseUrl);
 
-    const tokens = this.generateTokens(user);
-    return { user: this.sanitizeUser(user), ...tokens };
+    return {
+      user: this.sanitizeUser(user),
+      message:
+        'Account created. Please verify your email before signing in — we sent a link to your inbox.',
+    };
   }
 
   /** Verifies a user's email using the token sent during registration. */
@@ -91,9 +120,10 @@ export class AuthService {
     user.emailVerificationToken = newToken;
     await this.userRepo.save(user);
 
-    const baseUrl = user.role === UserRole.DOCTOR
-      ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
-      : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+    const baseUrl =
+      user.role === UserRole.DOCTOR
+        ? this.doctorAppPublicBase()
+        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
     await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
     return { message: 'Verification email sent' };
   }
@@ -108,9 +138,10 @@ export class AuthService {
       const newToken = crypto.randomBytes(32).toString('hex');
       user.emailVerificationToken = newToken;
       await this.userRepo.save(user);
-      const baseUrl = user.role === UserRole.DOCTOR
-        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
-        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+      const baseUrl =
+        user.role === UserRole.DOCTOR
+          ? this.doctorAppPublicBase()
+          : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
       await this.mailService.sendVerificationEmail(user.email, user.firstName, newToken, baseUrl);
     }
     return { message: 'If your email is not verified, we have sent a new verification link.' };
@@ -147,9 +178,10 @@ export class AuthService {
       user.passwordResetToken = resetToken;
       user.passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       await this.userRepo.save(user);
-      const baseUrl = user.role === UserRole.DOCTOR
-        ? this.configService.get('DOCTOR_APP_URL', 'http://localhost:3002/doctor')
-        : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
+      const baseUrl =
+        user.role === UserRole.DOCTOR
+          ? this.doctorAppPublicBase()
+          : this.configService.get('PATIENT_APP_URL', 'http://localhost:3001');
       await this.mailService.sendPasswordResetEmail(user.email, user.firstName, resetToken, baseUrl);
     }
 

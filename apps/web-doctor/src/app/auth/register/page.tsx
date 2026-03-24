@@ -8,7 +8,6 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2, Stethoscope } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-
 const SPECIALIZATIONS = [
   'General Physician','Cardiologist','Dermatologist','Neurologist',
   'Orthopedic','Pediatrician','Gynecologist','ENT Specialist',
@@ -32,16 +31,19 @@ type F = z.infer<typeof schema>;
 export default function DoctorRegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<F>({ resolver: zodResolver(schema) });
-  const setAuth = useAuthStore(s => s.setAuth);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<F>({ resolver: zodResolver(schema), mode: 'onChange' });
   const router = useRouter();
 
   const onSubmit = async ({ confirm, ...data }: F) => {
     setError('');
     try {
-      const res = await authApi.register({ ...data, role: 'doctor' });
-      setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
-      router.push('/dashboard');
+      await authApi.register({ ...data, role: 'doctor' });
+      useAuthStore.getState().clearAuth();
+      router.replace(`/auth/check-email?email=${encodeURIComponent(data.email)}`);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Registration failed.');
     }
@@ -126,7 +128,11 @@ export default function DoctorRegisterPage() {
               {errors.confirm && <p className="text-red-600 text-xs mt-1">{errors.confirm.message}</p>}
             </div>
 
-            <button type="submit" disabled={isSubmitting} className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
+            <button
+              type="submit"
+              disabled={isSubmitting || !isValid}
+              className="btn-primary mt-2 flex w-full items-center justify-center gap-2"
+            >
               {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating account…</> : 'Create Doctor Account'}
             </button>
           </form>

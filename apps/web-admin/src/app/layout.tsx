@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: 'Admin dashboard for Dochain.',
   manifest: `${basePath}/manifest.json`,
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Dochain Admin' },
+  icons: {
+    icon: [{ url: `${basePath}/icon.svg`, type: 'image/svg+xml' }],
+    apple: `${basePath}/icons/icon-192x192.png`,
+  },
 };
 
 export const viewport: Viewport = {
@@ -30,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={jakarta.variable}>
       <head>
         <link rel="apple-touch-icon" href={`${basePath}/icons/icon-192x192.png`} />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-gray-50 text-gray-900 antialiased font-sans">

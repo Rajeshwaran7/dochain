@@ -7,8 +7,9 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, AppointmentStatus } from '@dochain/database';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CreateAppointmentDto, RescheduleAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { DoctorPatientsQueryDto } from './dto/doctor-patients-query.dto';
 
 @ApiTags('Appointments')
 @Controller('appointments')
@@ -46,6 +47,16 @@ export class AppointmentsController {
     @Query('status') status?: AppointmentStatus,
   ) {
     return this.appointmentsService.getDoctorAppointments(req.user.id, date, status);
+  }
+
+  @Get('doctor/patients')
+  @Roles(UserRole.DOCTOR)
+  @UseGuards(RolesGuard)
+  @ApiOperation({
+    summary: 'List patients from completed visits (search, date range, sort, pagination)',
+  })
+  async getDoctorPatients(@Request() req, @Query() dto: DoctorPatientsQueryDto) {
+    return this.appointmentsService.getDoctorPatients(req.user.id, dto);
   }
 
   @Get('doctor/stats')
@@ -87,6 +98,16 @@ export class AppointmentsController {
       body.razorpayPaymentId,
       body.razorpaySignature,
     );
+  }
+
+  @Put(':id/reschedule')
+  @ApiOperation({ summary: 'Reschedule appointment (doctor or patient)' })
+  async reschedule(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: RescheduleAppointmentDto,
+  ) {
+    return this.appointmentsService.reschedule(id, req.user.id, req.user.role, dto);
   }
 
   @Get(':id')

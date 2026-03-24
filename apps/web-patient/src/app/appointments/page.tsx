@@ -6,6 +6,7 @@ import { Calendar, Clock, MapPin, ChevronLeft, Loader2, X, Star } from 'lucide-r
 import { useAuthStore } from '@/store/auth.store';
 import { useMyAppointments, useCancelAppointment, useCreateReview } from '@/hooks/useApi';
 import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const TABS = [
   { label: 'Upcoming', value: 'confirmed' },
@@ -42,6 +43,7 @@ export default function AppointmentsPage() {
       await cancel({ id: cancelId, reason });
       setCancelId(null);
       setReason('');
+      toast.success('Appointment cancelled.');
     } catch {
       setCancelError('Failed to cancel appointment. Please try again.');
     }
@@ -60,6 +62,7 @@ export default function AppointmentsPage() {
       setReviewAppt(null);
       setReviewRating(5);
       setReviewComment('');
+      toast.success('Thanks for your review.');
     } catch {
       setReviewError('Failed to submit review. You may have already reviewed this appointment.');
     }
@@ -110,13 +113,14 @@ export default function AppointmentsPage() {
             {appointments.map((appt: any) => {
               const doctor = appt.doctor;
               const user = doctor?.user || {};
+              const profilePhoto = doctor?.profileImage ?? user.avatar;
               return (
                 <div key={appt.id} className="card p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex gap-4">
                       <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                        {user.avatar
-                          ? <img src={user.avatar} className="w-full h-full object-cover rounded-xl" alt="" />
+                        {profilePhoto
+                          ? <img src={profilePhoto} className="w-full h-full object-cover rounded-xl" alt="" />
                           : <span className="font-bold text-cyan-600">{user.firstName?.[0]}{user.lastName?.[0]}</span>
                         }
                       </div>

@@ -24,8 +24,13 @@ export default function DoctorLoginPage() {
   const [resendEmail, setResendEmail] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendPending, setResendPending] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<F>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<F>({
     resolver: zodResolver(schema),
+    mode: 'onChange',
   });
   const setAuth = useAuthStore((s) => s.setAuth);
   const router = useRouter();
@@ -154,7 +159,7 @@ export default function DoctorLoginPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isValid}
               className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
             >
               {isSubmitting

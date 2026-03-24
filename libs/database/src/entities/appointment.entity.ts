@@ -88,6 +88,10 @@ export class Appointment {
   @Column({ nullable: true })
   confirmationToken: string;
 
+  /** Client-supplied key so retries do not create duplicate bookings. */
+  @Column({ nullable: true, unique: true })
+  idempotencyKey: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

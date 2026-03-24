@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { doctorsApi, appointmentsApi, reviewsApi } from '@/lib/api';
+import {
+  doctorsApi,
+  appointmentsApi,
+  reviewsApi,
+  medicalRecordsApi,
+  prescriptionsApi,
+  chatApi,
+} from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
 // ── Doctor hooks ──────────────────────────────────────────────────────────────
@@ -36,10 +43,16 @@ export function useCities() {
 }
 
 // ── Appointment hooks ─────────────────────────────────────────────────────────
+export type DoctorSlotOption = {
+  time: string;
+  status: 'available' | 'booked' | 'completed' | 'past';
+};
+
 export function useAvailableSlots(doctorId: string, date: string) {
-  return useQuery({
+  return useQuery<DoctorSlotOption[]>({
     queryKey: ['slots', doctorId, date],
-    queryFn: () => appointmentsApi.getSlots(doctorId, date).then((r) => r.data),
+    queryFn: () =>
+      appointmentsApi.getSlots(doctorId, date).then((r) => r.data as DoctorSlotOption[]),
     enabled: !!doctorId && !!date,
     staleTime: 1000 * 30,
   });
@@ -57,8 +70,11 @@ export function useMyAppointments(status?: string) {
 export function useBookAppointment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => appointmentsApi.book(data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
+    mutationFn: (data: Record<string, unknown>) => appointmentsApi.book(data).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['appointments'] });
+      qc.invalidateQueries({ queryKey: ['slots'] });
+    },
   });
 }
 
@@ -85,5 +101,71 @@ export function useCreateReview() {
   return useMutation({
     mutationFn: (data: any) => reviewsApi.create(data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reviews'] }),
+  });
+}
+
+export function useMyMedicalRecords() {
+  const { isAuthenticated } = useAuthStore();
+  return useQuery({
+    queryKey: ['medical-records', 'me'],
+    queryFn: () => medicalRecordsApi.getMine().then((r) => r.data),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useMyPrescriptions() {
+  const { isAuthenticated } = useAuthStore();
+  return useQuery({
+    queryKey: ['prescriptions', 'me'],
+    queryFn: () => prescriptionsApi.getMine().then((r) => r.data),
+    enabled: isAuthenticated,
+  });
+}
+
+export function usePatientChatConversations() {
+  const { isAuthenticated } = useAuthStore();
+  return useQuery({
+    queryKey: ['chat-conversations'],
+    queryFn: () => chatApi.listConversations().then((r) => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 8000,
+  });
+}
+
+export function useOpenPatientConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { doctorId: string; appointmentId?: string }) =>
+      chatApi.open(data).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['chat-conversations'] }),
+  });
+}
+
+export function usePatientChatMessages(conversationId: string | undefined) {
+  const { isAuthenticated } = useAuthStore();
+  return useQuery({
+    queryKey: ['chat-messages', conversationId],
+    queryFn: () => chatApi.getMessages(conversationId!).then((r) => r.data),
+    enabled: !!conversationId && isAuthenticated,
+    refetchInterval: 4000,
+  });
+}
+
+export function useSendPatientChatMessage(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) => chatApi.sendMessage(conversationId, { body }).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['chat-messages', conversationId] }),
+  });
+}
+
+export function useMarkPatientChatRead(conversationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => chatApi.markRead(conversationId).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chat-messages', conversationId] });
+      qc.invalidateQueries({ queryKey: ['chat-conversations'] });
+    },
   });
 }

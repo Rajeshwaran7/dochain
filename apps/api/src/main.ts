@@ -70,6 +70,9 @@ async function bootstrap() {
       .addTag('Reviews', 'Reviews and ratings')
       .addTag('Subscriptions', 'Subscription management')
       .addTag('Admin', 'Admin operations')
+      .addTag('Medical records', 'Visit history and diagnoses')
+      .addTag('Prescriptions', 'PDF prescriptions')
+      .addTag('Chat', 'Doctor–patient messaging')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

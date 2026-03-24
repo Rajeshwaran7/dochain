@@ -1,7 +1,19 @@
 import {
-  Controller, Get, Post, Put, Body, Param, Query,
-  UseGuards, Request,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { DoctorsService } from './doctors.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -43,6 +55,29 @@ export class DoctorsController {
   @ApiOperation({ summary: 'Get own doctor profile' })
   async getMyProfile(@Request() req) {
     return this.doctorsService.getMyProfile(req.user.id);
+  }
+
+  @Post('me/avatar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiOperation({ summary: 'Upload profile image (multipart field: file)' })
+  async uploadAvatar(
+    @Request() req,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number },
+  ) {
+    if (!file?.buffer) throw new BadRequestException('file is required');
+    return this.doctorsService.uploadProfileAvatar(req.user.id, file);
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DOCTOR)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove profile image (fallback to initials in apps)' })
+  async deleteAvatar(@Request() req) {
+    return this.doctorsService.clearProfileAvatar(req.user.id);
   }
 
   @Get(':id')

@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsDateString, IsEnum, IsOptional, IsUUID, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppointmentStatus, AppointmentType } from '@dochain/database';
 
@@ -10,6 +10,14 @@ export class CreateAppointmentDto {
   @ApiPropertyOptional({ enum: AppointmentType }) @IsOptional() @IsEnum(AppointmentType) type?: AppointmentType;
   @ApiPropertyOptional() @IsOptional() @IsString() symptoms?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+  /** Same key on retry returns the same booking (patient must match). */
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(128) idempotencyKey?: string;
+}
+
+export class RescheduleAppointmentDto {
+  @ApiProperty() @IsDateString() appointmentDate: string;
+  @ApiProperty() @IsString() startTime: string;
+  @ApiProperty() @IsString() endTime: string;
 }
 
 export class UpdateAppointmentStatusDto {

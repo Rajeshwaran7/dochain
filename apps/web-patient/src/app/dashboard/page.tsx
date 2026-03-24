@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Search, Star, User, LogOut, Bell } from 'lucide-react';
+import { Calendar, Search, Star, User, LogOut, Bell, HeartPulse } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useMyAppointments } from '@/hooks/useApi';
 import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
@@ -46,12 +46,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           {[
             { icon: <Search className="w-5 h-5" />, label: 'Find Doctor', href: '/doctors', color: 'text-cyan-600' },
             { icon: <Calendar className="w-5 h-5" />, label: 'Appointments', href: '/appointments', color: 'text-violet-600' },
             { icon: <Star className="w-5 h-5" />, label: 'Reviews', href: '/appointments?tab=completed', color: 'text-amber-600' },
             { icon: <User className="w-5 h-5" />, label: 'My Profile', href: '/profile', color: 'text-emerald-600' },
+            { icon: <HeartPulse className="w-5 h-5" />, label: 'Health & records', href: '/health', color: 'text-rose-600' },
           ].map((a) => (
             <Link key={a.label} href={a.href}
               className="card-hover p-5 flex flex-col items-center gap-2 text-center"

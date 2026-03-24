@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start:api": "nx serve api",
+    "dev:api": "nx serve api",
     "start:patient": "nx run @dochain/web-patient:dev",
     "start:doctor": "nx run @dochain/web-doctor:dev",
     "start:admin": "nx run @dochain/web-admin:dev",

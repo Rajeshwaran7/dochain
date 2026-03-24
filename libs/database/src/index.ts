@@ -6,3 +6,8 @@ export * from './entities/appointment.entity';
 export * from './entities/availability.entity';
 export * from './entities/review.entity';
 export * from './entities/subscription.entity';
+export * from './entities/medical-record-entry.entity';
+export * from './entities/medical-attachment.entity';
+export * from './entities/prescription.entity';
+export * from './entities/conversation.entity';
+export * from './entities/message.entity';

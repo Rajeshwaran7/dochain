@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, FindOptionsWhere } from 'typeorm';
 import { Doctor, Clinic, DoctorStatus } from '@dochain/database';
@@ -10,12 +6,16 @@ import { CreateDoctorProfileDto } from './dto/create-doctor-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 import { SearchDoctorsDto } from './dto/search-doctors.dto';
 import { CreateClinicDto } from './dto/create-clinic.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+
+const AVATAR_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 @Injectable()
 export class DoctorsService {
   constructor(
     @InjectRepository(Doctor) private doctorRepo: Repository<Doctor>,
     @InjectRepository(Clinic) private clinicRepo: Repository<Clinic>,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async search(dto: SearchDoctorsDto) {
@@ -133,5 +133,59 @@ export class DoctorsService {
 
   async findByUserId(userId: string): Promise<Doctor> {
     return this.doctorRepo.findOne({ where: { userId } });
+  }
+
+  /**
+   * Validates image type/size, uploads to Cloudinary, updates doctor profile URL and public id.
+   */
+  async uploadProfileAvatar(
+    userId: string,
+    file: { buffer: Buffer; mimetype: string; size: number },
+  ): Promise<Doctor> {
+    if (!this.cloudinary.isConfigured()) {
+      throw new BadRequestException('Image upload is not configured (Cloudinary).');
+    }
+    if (!AVATAR_MIMES.has(file.mimetype)) {
+      throw new BadRequestException('Only JPEG, PNG, or WebP images are allowed.');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Image must be 5MB or smaller.');
+    }
+
+    const doctor = await this.doctorRepo.findOne({ where: { userId } });
+    if (!doctor) throw new NotFoundException('Doctor profile not found');
+
+    const prevPublicId = doctor.profileImagePublicId;
+    const folder = 'dochain/doctors/avatars';
+    const publicId = `doc_${doctor.id}`;
+    const { secureUrl, publicId: fullPublicId } = await this.cloudinary.uploadImage(file.buffer, {
+      folder,
+      publicId,
+    });
+
+    doctor.profileImage = secureUrl;
+    doctor.profileImagePublicId = fullPublicId;
+    const saved = await this.doctorRepo.save(doctor);
+
+    if (prevPublicId && prevPublicId !== fullPublicId) {
+      await this.cloudinary.destroy(prevPublicId);
+    }
+    return saved;
+  }
+
+  /**
+   * Clears doctor profile image and removes the asset from Cloudinary when possible.
+   */
+  async clearProfileAvatar(userId: string): Promise<Doctor> {
+    const doctor = await this.doctorRepo.findOne({ where: { userId } });
+    if (!doctor) throw new NotFoundException('Doctor profile not found');
+
+    const prevPublicId = doctor.profileImagePublicId;
+    doctor.profileImage = null;
+    doctor.profileImagePublicId = null;
+    const saved = await this.doctorRepo.save(doctor);
+
+    if (prevPublicId) await this.cloudinary.destroy(prevPublicId);
+    return saved;
   }
 }
