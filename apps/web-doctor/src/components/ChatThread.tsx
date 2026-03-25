@@ -91,7 +91,7 @@ function DoctorScrollMessages({
   isLoading: boolean;
   messages: ChatMessage[] | undefined;
   role: 'doctor' | 'patient';
-  bottomRef: React.RefObject<HTMLDivElement | null>;
+  bottomRef: React.Ref<HTMLDivElement>;
 }) {
   return (
     <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">

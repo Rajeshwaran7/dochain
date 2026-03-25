@@ -66,7 +66,7 @@ export function HealthContent() {
         : 'Doctor';
       if (!map.has(d.id)) map.set(d.id, { id: d.id, name });
     }
-    return [...map.values()];
+    return Array.from(map.values());
   }, [appointments]);
 
   const startChat = async (doctorId: string) => {
