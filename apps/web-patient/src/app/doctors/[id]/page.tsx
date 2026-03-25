@@ -12,6 +12,7 @@ import {
   useDoctorReviews,
   useBookAppointment,
   useOpenPatientConversation,
+  type DoctorSlotOption,
 } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth.store';
 import { formatCurrency, formatTime, formatDate } from '@/lib/utils';
